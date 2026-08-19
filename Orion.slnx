@@ -1,6 +1,14 @@
 <Solution>
-  <Project Path="src/Api/Api.csproj" />
+  <Folder Name="/Modules/">
+    <Project Path="src/Modules/Authentication/Authentication.csproj" Id="a987b2ea-8dc2-4d00-8d99-b35b5763bbe0" />
+    <Project Path="src/Modules/Users/Users.csproj" Id="033f3f23-7bd9-41fd-a78c-857c5da893fc" />
+  </Folder>
+  <Folder Name="/Tests/" />
+  <Folder Name="/Tests/Modules/">
+    <Project Path="src/Tests/Modules/Users/Users.csproj" Id="c682209b-e053-4b6a-85d3-3752ca6a4b1c" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
+  <Project Path="src/Api/Api.csproj" />
 </Solution>
