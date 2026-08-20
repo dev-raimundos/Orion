@@ -7,9 +7,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Folder Include="Domain\" />
-		<Folder Include="Application\" />
-		<Folder Include="Infrastructure\" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Orion.SharedKernel\Orion.SharedKernel.csproj" />
 	</ItemGroup>
 
 </Project>
