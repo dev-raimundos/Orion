@@ -1,4 +1,4 @@
-using Orion.Application.Contracts;
+using Orion.SharedKernel.Contracts;
 using Users.Application.Abstractions;
 using Users.Domain.Abstractions;
 

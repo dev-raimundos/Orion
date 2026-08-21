@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Orion.Application.Contracts;
+using Orion.SharedKernel.Contracts;
 using Users.Application.Abstractions;
 using Users.Application.UseCases;
 using Users.Domain.Abstractions;

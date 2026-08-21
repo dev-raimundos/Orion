@@ -1,4 +1,4 @@
-namespace Orion.Application.Contracts;
+namespace Orion.SharedKernel.Contracts;
 
 public sealed record AuthenticatedUser(Guid Id, string Email);
 

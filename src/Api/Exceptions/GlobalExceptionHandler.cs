@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Orion.Application;
+using Orion.SharedKernel;
 
 namespace Api.Exceptions;
 

@@ -1,4 +1,4 @@
-namespace Orion.Application;
+namespace Orion.SharedKernel;
 
 public enum ErrorType
 {

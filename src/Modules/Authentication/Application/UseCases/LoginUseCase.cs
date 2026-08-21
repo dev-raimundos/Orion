@@ -1,5 +1,5 @@
-using Orion.Application;
-using Orion.Application.Contracts;
+using Orion.SharedKernel;
+using Orion.SharedKernel.Contracts;
 using Authentication.Application.Abstractions;
 using Authentication.Domain;
 using Authentication.Domain.Abstractions;
