@@ -1,5 +1,5 @@
-using Api.Common;
-using Api.Modules.Users.Infrastructure;
+using Api.Exceptions;
+using Users.Infrastructure;
 
 namespace Api;
 

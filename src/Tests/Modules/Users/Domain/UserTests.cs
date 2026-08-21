@@ -1,6 +1,6 @@
-using Api.Modules.Users.Domain;
+using Users.Domain;
 
-namespace Users.Domain;
+namespace Users.Tests.Domain;
 
 public class UserTests
 {

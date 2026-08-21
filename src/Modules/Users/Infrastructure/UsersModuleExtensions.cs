@@ -1,0 +1,34 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Users.Application.Abstractions;
+using Users.Application.UseCases;
+using Users.Domain.Abstractions;
+using Users.Infrastructure.Persistence;
+using Users.Infrastructure.Security;
+
+namespace Users.Infrastructure;
+
+public static class UsersModuleExtensions
+{
+    public static IServiceCollection AddUsersModule(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DatabaseConnection")
+            ?? throw new InvalidOperationException("Connection string 'DatabaseConnection' não configurada.");
+
+        services.AddDbContext<UsersDbContext>(options => options.UseSqlServer(connectionString));
+
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+        services.AddScoped<CreateUserUseCase>();
+        services.AddScoped<GetUserByIdUseCase>();
+        services.AddScoped<RenameUserUseCase>();
+        services.AddScoped<ChangePasswordUseCase>();
+        services.AddScoped<VerifyEmailUseCase>();
+        services.AddScoped<ActivateUserUseCase>();
+        services.AddScoped<DeactivateUserUseCase>();
+
+        return services;
+    }
+}

@@ -1,6 +1,6 @@
-using Api.Modules.Users.Infrastructure.Security;
+using Users.Infrastructure.Security;
 
-namespace Users.Infrastructure;
+namespace Users.Tests.Infrastructure;
 
 public class PasswordHasherTests
 {

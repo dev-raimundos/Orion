@@ -1,11 +1,11 @@
-using Api.Common;
-using Api.Modules.Users.Application.Abstractions;
-using Api.Modules.Users.Application.UseCases;
-using Api.Modules.Users.Domain;
-using Api.Modules.Users.Domain.Abstractions;
+using Orion.Application;
+using Users.Application.Abstractions;
+using Users.Application.UseCases;
+using Users.Domain;
+using Users.Domain.Abstractions;
 using Moq;
 
-namespace Users.Application;
+namespace Users.Tests.Application;
 
 public class ChangePasswordUseCaseTests
 {
