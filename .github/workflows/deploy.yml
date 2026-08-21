@@ -41,13 +41,12 @@ jobs:
   # Dokploy. Senão o Dokploy tenta deployar direto no push (via GitHub App),
   # em paralelo com este workflow, e código com teste quebrado poderia subir
   # antes desse job barrar.
+  # A URL do secret DOKPLOY_WEBHOOK_URL já É a credencial (não tem x-api-key
+  # separado) — qualquer um com ela dispara deploy. Por isso vive só como
+  # secret, nunca aparece hardcoded aqui nem em nenhum arquivo commitado.
   deploy:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Disparar deploy no Dokploy
-        run: |
-          curl --fail -X POST "${{ secrets.DOKPLOY_URL }}/api/compose.deploy" \
-            -H "x-api-key: ${{ secrets.DOKPLOY_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"composeId\": \"${{ secrets.DOKPLOY_COMPOSE_ID }}\"}"
+        run: curl --fail -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
