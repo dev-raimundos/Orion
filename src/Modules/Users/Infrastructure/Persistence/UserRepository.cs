@@ -20,7 +20,6 @@ public class UserRepository(UsersDbContext context) : IUserRepository
         await _context.SaveChangesAsync(ct);
     }
 
-    // Assume que 'user' foi carregado por este mesmo context (GetByIdAsync), então já está tracked.
     public async Task UpdateAsync(User user, CancellationToken ct)
     {
         await _context.SaveChangesAsync(ct);
