@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Users.Application.UseCases;
 
@@ -5,6 +6,7 @@ namespace Users.Infrastructure.Web;
 
 [ApiController]
 [Route("api/users")]
+[AllowAnonymous]
 public class CreateUserController(CreateUserUseCase createUser) : ControllerBase
 {
     private readonly CreateUserUseCase _createUser = createUser;
