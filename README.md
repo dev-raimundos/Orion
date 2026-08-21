@@ -191,3 +191,53 @@ Dois caminhos, propositalmente separados:
   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
   ```
   Segredos entram via variável de ambiente (`ConnectionStrings__DatabaseConnection`, `Jwt__SigningKey`), não via arquivo. A imagem expõe `HEALTHCHECK` batendo em `/health`.
+
+## CI/CD
+
+`.github/workflows/deploy.yml` roda a cada push em `main` (ou manualmente via `workflow_dispatch`), em três estágios sequenciais:
+
+1. **test** — `dotnet build` + `dotnet test` na solução inteira, num runner hospedado pelo GitHub (`ubuntu-latest`).
+2. **migrate** — aplica as migrations pendentes de `Users` e `Authentication` contra o banco de produção (`dotnet ef database update`, um por módulo). Só roda se `test` passar.
+3. **deploy** — chama a API do [Dokploy](https://dokploy.com) (`POST /api/compose.deploy`) pra disparar o redeploy do app. Só roda se `migrate` passar.
+
+### Por que `migrate` roda num runner self-hosted, não no `ubuntu-latest`
+
+Um runner hospedado pelo GitHub roda na nuvem — ele não alcançaria um SQL Server on-premise sem exposição pra internet. Por isso o job `migrate` usa `runs-on: self-hosted`: você precisa registrar um [runner self-hosted](https://docs.github.com/en/actions/hosting-your-own-runners) numa máquina da sua própria rede (que já enxergue o banco), em Settings → Actions → Runners → New self-hosted runner. É esse runner — não um do GitHub — que efetivamente executa o `dotnet ef database update`.
+
+### Deploy via Dokploy, não via SSH/Docker manual
+
+A aplicação está conectada ao Dokploy por integração de GitHub App, com o app configurado como tipo **Compose** — o próprio Dokploy clona o repo e builda a partir do `docker-compose.yml`, sem precisarmos publicar imagem em nenhum registry.
+
+Importante: o toggle **Auto Deploy** dessa integração deve ficar **desligado** no painel do Dokploy. Se ele ficar ligado, o Dokploy tentaria deployar direto a cada push (via webhook do próprio GitHub App), em paralelo com esse workflow — e a ordem `test → migrate → deploy` deixaria de ser garantida (o container novo podendo subir antes da migration terminar). Com o toggle desligado, quem decide *quando* deployar é exclusivamente o job `deploy`, chamando a API depois que tudo antes dele passou.
+
+Secrets necessários no repositório GitHub (Settings → Secrets and variables → Actions):
+
+| Secret | Usado em | Onde conseguir |
+|---|---|---|
+| `DATABASE_CONNECTION_STRING` | `migrate` | a mesma connection string do `.env` de produção |
+| `JWT_SIGNING_KEY` | `migrate` (a checagem em `Program.cs` roda mesmo só pra gerar a migration) | a mesma chave do `.env` de produção |
+| `DOKPLOY_URL` | `deploy` | URL base da sua instância Dokploy, sem barra no final |
+| `DOKPLOY_API_TOKEN` | `deploy` | perfil Dokploy → API/CLI → Generate API Key |
+| `DOKPLOY_COMPOSE_ID` | `deploy` | aparece na URL da aplicação no painel do Dokploy |
+
+## Estrutura de pastas
+
+```
+src/
+├── Api/                          host ASP.NET Core — Program.cs, Dockerfile, appsettings
+├── Modules/
+│   ├── Users/                    Domain / Application / Infrastructure
+│   └── Authentication/           Domain / Application / Infrastructure
+├── Orion.SharedKernel/           Entity<TId>, AppException, contratos cross-module
+└── Tests/
+    ├── Architecture/             isolamento entre módulos
+    └── Modules/Users/            testes unitários do módulo Users
+```
+
+## Limitações conhecidas / roadmap
+
+- Sem papéis/admin — a regra de autorização hoje é só "é o dono do recurso"; não existe um usuário que possa agir em nome de outro.
+- `auth.LoginAttempts` e `auth.RefreshTokens` (revogados/expirados) crescem indefinidamente — não há expurgo de registros antigos.
+- Bloqueio de login é só por email, não por IP/dispositivo.
+- Access token não é revogável antes de expirar (só o refresh token é) — se precisar de revogação imediata de sessão, precisaria de uma denylist de `jti` ou tokens de vida mais curta.
+- O job `migrate` depende de um runner self-hosted já registrado e configurado — se ele cair ou não existir, a pipeline para nesse estágio (por design: melhor parar do que seguir sem aplicar migration).

@@ -36,11 +36,4 @@ public static class UsersModuleExtensions
 
         return services;
     }
-
-    public static async Task MigrateUsersModuleAsync(this IServiceProvider services, CancellationToken ct = default)
-    {
-        using var scope = services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<UsersDbContext>();
-        await context.Database.MigrateAsync(ct);
-    }
 }

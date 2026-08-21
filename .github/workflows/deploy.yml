@@ -4,17 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      run_migrations:
-        description: "Aplicar as migrations do EF Core neste deploy?"
-        type: boolean
-        default: false
 
 env:
   DOTNET_VERSION: "10.0.x"
-  # Mesmo nome de imagem que docker-compose.yml/docker-compose.prod.yml esperam
-  # via "${DOCKER_REGISTRY-}api" — só muda o registry na frente.
-  DOCKER_REGISTRY: ghcr.io/${{ github.repository_owner }}/
 
 jobs:
   test:
@@ -36,56 +28,61 @@ jobs:
       - name: Test
         run: dotnet test Orion.slnx --no-build -c Release
 
-  # Migration não roda aqui: um runner do GitHub na nuvem não alcançaria um SQL
-  # Server on-premise sem exposição pra internet. A própria aplicação aplica as
-  # migrations pendentes no startup, controlada pela env var RUN_MIGRATIONS
-  # (ver Program.cs e docker-compose.prod.yml) — o job "deploy" abaixo só liga
-  # essa variável, quem roda a migration de fato é o container já dentro da rede.
-  build-and-push:
+  # Roda num runner self-hosted (instalado na sua rede on-premise, com acesso
+  # ao SQL Server) — um runner hospedado pelo GitHub não alcançaria o banco.
+  # Configuração: Settings → Actions → Runners → New self-hosted runner no
+  # repositório, instalado numa máquina que já enxergue o SQL Server.
+  migrate:
     needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Build and push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: src/Api/Dockerfile
-          push: true
-          tags: |
-            ${{ env.DOCKER_REGISTRY }}api:latest
-            ${{ env.DOCKER_REGISTRY }}api:${{ github.sha }}
+      - name: Install dotnet-ef
+        run: |
+          dotnet tool install --global dotnet-ef
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
 
-  # Assume um host Docker on-premise acessível via SSH, com o repo (docker-compose*.yml)
-  # já clonado em /opt/orion e um ".env" de produção configurado lá (ver .env.production.example).
-  # Ajuste o "cd" se o caminho no seu servidor for outro.
+      - name: Apply Users module migrations
+        run: >
+          dotnet ef database update
+          --project src/Modules/Users/Users.csproj
+          --startup-project src/Api/Api.csproj
+        env:
+          ConnectionStrings__DatabaseConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          Jwt__SigningKey: ${{ secrets.JWT_SIGNING_KEY }}
+
+      - name: Apply Authentication module migrations
+        run: >
+          dotnet ef database update
+          --project src/Modules/Authentication/Authentication.csproj
+          --startup-project src/Api/Api.csproj
+          --context AuthenticationDbContext
+        env:
+          ConnectionStrings__DatabaseConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
+          Jwt__SigningKey: ${{ secrets.JWT_SIGNING_KEY }}
+
+  # Não builda nem publica imagem aqui — o app "Compose" no Dokploy já está
+  # ligado ao repo via GitHub App e cuida de clonar/buildar sozinho. Este job
+  # só avisa o Dokploy "pode deployar agora", depois que migrate passou —
+  # isso evita o container novo subir antes do schema estar pronto.
+  #
+  # Pré-requisito: desligue o toggle "Auto Deploy" da aplicação no painel do
+  # Dokploy. Senão o Dokploy tenta deployar direto no push (via GitHub App),
+  # em paralelo com este workflow, e a ordem test → migrate → deploy deixa
+  # de ser garantida.
   deploy:
-    needs: build-and-push
+    needs: migrate
     runs-on: ubuntu-latest
-    environment: production
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            cd /opt/orion
-            export DOCKER_REGISTRY=${{ env.DOCKER_REGISTRY }}
-            export TAG=${{ github.sha }}
-            export RUN_MIGRATIONS=${{ (github.event_name == 'workflow_dispatch' && inputs.run_migrations == true) || (github.event_name != 'workflow_dispatch' && vars.RUN_MIGRATIONS == 'true') }}
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+      - name: Disparar deploy no Dokploy
+        run: |
+          curl --fail -X POST "${{ secrets.DOKPLOY_URL }}/api/compose.deploy" \
+            -H "x-api-key: ${{ secrets.DOKPLOY_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"composeId\": \"${{ secrets.DOKPLOY_COMPOSE_ID }}\"}"
