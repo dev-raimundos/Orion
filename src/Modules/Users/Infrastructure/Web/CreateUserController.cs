@@ -6,7 +6,7 @@ namespace Users.Infrastructure.Web;
 
 [ApiController]
 [Route("api/users")]
-[AllowAnonymous]
+[Authorize]
 public class CreateUserController(CreateUserUseCase createUser) : ControllerBase
 {
     private readonly CreateUserUseCase _createUser = createUser;
