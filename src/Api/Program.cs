@@ -2,6 +2,7 @@ using System.Text;
 using Api.Exceptions;
 using Authentication.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Users.Infrastructure;
@@ -63,6 +64,20 @@ public class Program
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
         builder.Services.AddProblemDetails();
 
+        // Em produção a app roda atrás do proxy do Dokploy/Traefik, que termina o
+        // TLS e encaminha pra dentro em HTTP puro. Sem isso, a app não sabe que a
+        // requisição original veio por HTTPS (afeta UseHttpsRedirection, cookies
+        // Secure, e qualquer URL absoluta que a app venha a gerar). Limpar
+        // KnownNetworks/KnownProxies é seguro aqui porque o container não expõe
+        // porta pro host (ver "expose" no docker-compose.yml) — só o proxy, na
+        // mesma rede Docker, consegue falar com ele.
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -75,6 +90,8 @@ public class Program
         }
 
         app.UseExceptionHandler();
+
+        app.UseForwardedHeaders();
 
         app.UseHttpsRedirection();
 

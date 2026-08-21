@@ -182,15 +182,20 @@ dotnet run --project src/Api/Api.csproj
 
 ## Docker
 
-Dois caminhos, propositalmente separados:
+Um único `docker-compose.yml` — ele já é de produção por padrão (`ASPNETCORE_ENVIRONMENT=Production`, `restart: unless-stopped`, healthcheck). Não existe mais um `docker-compose.prod.yml` separado: é isso mesmo que se aponta na hora de configurar a aplicação no Dokploy (Compose Path: `./docker-compose.yml`), porque o Dokploy só aceita **um** arquivo de compose por aplicação.
 
-- **Dev** — `docker compose up` aplica `docker-compose.yml` + `docker-compose.override.yml` automaticamente. Monta o user-secrets e o certificado de desenvolvimento da máquina host; força `ASPNETCORE_ENVIRONMENT=Development`. Nunca use isso em produção.
-- **Produção** — precisa ser explicitamente pedido, não é aplicado por acidente:
-  ```bash
-  cp .env.production.example .env   # preencher com valores reais
-  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-  ```
-  Segredos entram via variável de ambiente (`ConnectionStrings__DatabaseConnection`, `Jwt__SigningKey`), não via arquivo. A imagem expõe `HEALTHCHECK` batendo em `/health`.
+`docker-compose.override.yml` é aplicado **automaticamente por cima** quando você roda `docker compose up` sem especificar arquivo — é só isso que muda o comportamento pra dev local: força `ASPNETCORE_ENVIRONMENT=Development`, publica as portas 8080/8081 no host (pra acessar via `localhost`), e monta o user-secrets + certificado de desenvolvimento da sua máquina. Em produção (Dokploy rodando o compose sozinho, sem esse arquivo por perto), nada disso se aplica.
+
+Duas decisões de design que valem explicar:
+
+- **`expose` em vez de `ports`** no serviço `api`: a porta 8080 fica alcançável só por outros containers na mesma rede Docker (o proxy do Dokploy/Traefik) — não é publicada no host. Isso fecha a possibilidade de alguém acessar a API direto, pulando o proxy/TLS.
+- **Variáveis de segredo sem `=valor`** (`ConnectionStrings__DatabaseConnection`, `Jwt__SigningKey`, etc.): Compose só repassa essas variáveis pro container se elas existirem no ambiente de quem roda o `docker compose` (o painel do Dokploy escreve isso num `.env` que ele mesmo gerencia). Em dev local, elas ficam ausentes de propósito — se tivessem um valor fixo (mesmo vazio), sobrescreveriam os `user-secrets` sem querer, já que variável de ambiente tem prioridade mais alta que user-secrets na ordem de configuração do ASP.NET Core.
+
+Pra rodar manualmente sem Dokploy (ex.: testar a imagem de produção local): copie `.env.production.example` pra `.env` na raiz e rode `docker compose up -d`, sem nenhum `-f` extra.
+
+### App atrás de proxy reverso (Dokploy/Traefik)
+
+O Dokploy termina o TLS (seu domínio, ex. `https://orion.neon-vertex.api.br`) e encaminha pra dentro do container em HTTP puro — a app, por padrão, não tem como saber que a requisição original veio por HTTPS. Isso é resolvido no `Program.cs` com `UseForwardedHeaders()`, lendo `X-Forwarded-Proto`/`X-Forwarded-For` que o proxy envia. Sem isso, `UseHttpsRedirection()` loga `"Failed to determine the https port for redirect"` e a app trata toda requisição como HTTP mesmo sendo HTTPS de verdade (afeta cookies `Secure`, entre outras coisas). Validei isso rodando a app em modo Produção local: o aviso aparece numa requisição sem o header, e desaparece com `X-Forwarded-Proto: https` presente.
 
 ## CI/CD
 

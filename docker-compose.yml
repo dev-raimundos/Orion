@@ -1,6 +1,32 @@
 services:
   api:
-    image: ${DOCKER_REGISTRY-}api
+    image: api
     build:
       context: .
       dockerfile: src/Api/Dockerfile
+      args:
+        BUILD_CONFIGURATION: Release
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Sem "=valor": Compose só passa essas variáveis pro container se elas
+      # existirem no ambiente/.env de quem roda o compose (ex.: o painel de
+      # env vars do Dokploy). Em dev local, ficam ausentes de propósito, pra
+      # a app cair no fallback dos user-secrets em vez de herdar um valor
+      # vazio que sobrescreveria o secret.
+      - ConnectionStrings__DatabaseConnection
+      - Jwt__Issuer
+      - Jwt__Audience
+      - Jwt__ExpirationMinutes
+      - Jwt__SigningKey
+    # "expose" (não "ports"): a porta só fica alcançável por outros containers
+    # na mesma rede Docker (o proxy do Dokploy/Traefik, nesse caso) — não é
+    # publicada no host. Ninguém acessa a API sem passar pelo proxy/TLS.
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
