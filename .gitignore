@@ -361,3 +361,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Secrets de ambiente (docker compose --env-file); nunca commitar valores reais
+.env
+.env.*
+!.env.*.example

@@ -19,6 +19,9 @@ public static class UsersModuleExtensions
 
         services.AddDbContext<UsersDbContext>(options => options.UseSqlServer(connectionString));
 
+        services.AddHealthChecks()
+            .AddDbContextCheck<UsersDbContext>(name: "users-db");
+
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IUserCredentialsChecker, UserCredentialsChecker>();

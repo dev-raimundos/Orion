@@ -18,6 +18,9 @@ public static class AuthenticationModuleExtensions
 
         services.AddDbContext<AuthenticationDbContext>(options => options.UseSqlServer(connectionString));
 
+        services.AddHealthChecks()
+            .AddDbContextCheck<AuthenticationDbContext>(name: "authentication-db");
+
         services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
         services.AddScoped<ITokenGenerator, JwtTokenGenerator>();
         services.AddScoped<LoginUseCase>();

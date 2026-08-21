@@ -1,0 +1,22 @@
+services:
+  api:
+    build:
+      args:
+        BUILD_CONFIGURATION: Release
+    image: ${DOCKER_REGISTRY-}api:${TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DatabaseConnection=${DATABASE_CONNECTION_STRING}
+      - Jwt__Issuer=${JWT_ISSUER:-Orion}
+      - Jwt__Audience=${JWT_AUDIENCE:-Orion.Clients}
+      - Jwt__ExpirationMinutes=${JWT_EXPIRATION_MINUTES:-60}
+      - Jwt__SigningKey=${JWT_SIGNING_KEY}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
