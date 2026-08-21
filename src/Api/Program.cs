@@ -36,7 +36,7 @@ public class Program
         });
 
         builder.Services.AddUsersModule(builder.Configuration);
-        builder.Services.AddAuthenticationModule();
+        builder.Services.AddAuthenticationModule(builder.Configuration);
 
         var jwtSection = builder.Configuration.GetSection("Jwt");
         var signingKey = jwtSection["SigningKey"]

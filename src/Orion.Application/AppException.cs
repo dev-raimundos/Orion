@@ -8,6 +8,7 @@ public enum ErrorType
     Forbidden,
     NotFound,
     Conflict,
+    Locked,
     Unexpected
 }
 
@@ -21,3 +22,4 @@ public sealed class AppUnauthorizedException(string message) : AppException(mess
 public sealed class AppForbiddenException(string message) : AppException(message, ErrorType.Forbidden);
 public sealed class AppNotFoundException(string message) : AppException(message, ErrorType.NotFound);
 public sealed class AppConflictException(string message) : AppException(message, ErrorType.Conflict);
+public sealed class AppLockedException(string message) : AppException(message, ErrorType.Locked);

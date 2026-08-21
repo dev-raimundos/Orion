@@ -12,6 +12,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\Orion.Application\Orion.Application.csproj" />
+		<ProjectReference Include="..\..\Orion.SharedKernel\Orion.SharedKernel.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -20,6 +21,11 @@
 
 	<ItemGroup>
 	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	    <PrivateAssets>all</PrivateAssets>
+	  </PackageReference>
+	  <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
 	</ItemGroup>
 
 </Project>

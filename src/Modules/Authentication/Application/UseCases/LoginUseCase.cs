@@ -1,21 +1,38 @@
 using Orion.Application;
 using Orion.Application.Contracts;
 using Authentication.Application.Abstractions;
+using Authentication.Domain;
+using Authentication.Domain.Abstractions;
 
 namespace Authentication.Application.UseCases;
 
 public sealed record LoginRequest(string Email, string Password);
 public sealed record LoginResult(string AccessToken, DateTimeOffset ExpiresAt);
 
-public class LoginUseCase(IUserCredentialsChecker credentialsChecker, ITokenGenerator tokenGenerator)
+public class LoginUseCase(
+    IUserCredentialsChecker credentialsChecker,
+    ITokenGenerator tokenGenerator,
+    ILoginAttemptRepository loginAttempts)
 {
     private readonly IUserCredentialsChecker _credentialsChecker = credentialsChecker;
     private readonly ITokenGenerator _tokenGenerator = tokenGenerator;
+    private readonly ILoginAttemptRepository _loginAttempts = loginAttempts;
 
     public async Task<LoginResult> ExecuteAsync(LoginRequest request, CancellationToken ct)
     {
-        var authenticatedUser = await _credentialsChecker.ValidateAsync(request.Email, request.Password, ct)
-            ?? throw new AppUnauthorizedException("Email ou senha inválidos.");
+        var now = DateTimeOffset.UtcNow;
+
+        var recentAttempts = await _loginAttempts.GetRecentAsync(request.Email, now - LoginLockoutPolicy.Window, ct);
+
+        if (LoginLockoutPolicy.IsLockedOut(recentAttempts, now, out var lockedUntil))
+            throw new AppLockedException($"Muitas tentativas de login falharam. Tente novamente após {lockedUntil:HH:mm:ss} UTC.");
+
+        var authenticatedUser = await _credentialsChecker.ValidateAsync(request.Email, request.Password, ct);
+
+        await _loginAttempts.AddAsync(LoginAttempt.Record(request.Email, succeeded: authenticatedUser is not null), ct);
+
+        if (authenticatedUser is null)
+            throw new AppUnauthorizedException("Email ou senha inválidos.");
 
         var (token, expiresAt) = _tokenGenerator.Generate(authenticatedUser.Id, authenticatedUser.Email);
 
