@@ -80,6 +80,12 @@ public class Program
 
         var app = builder.Build();
 
+        if (builder.Configuration.GetValue<bool>("RUN_MIGRATIONS"))
+        {
+            await app.Services.MigrateUsersModuleAsync();
+            await app.Services.MigrateAuthenticationModuleAsync();
+        }
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();

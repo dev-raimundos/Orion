@@ -31,4 +31,11 @@ public static class AuthenticationModuleExtensions
 
         return services;
     }
+
+    public static async Task MigrateAuthenticationModuleAsync(this IServiceProvider services, CancellationToken ct = default)
+    {
+        using var scope = services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AuthenticationDbContext>();
+        await context.Database.MigrateAsync(ct);
+    }
 }

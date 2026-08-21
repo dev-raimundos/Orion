@@ -28,56 +28,21 @@ jobs:
       - name: Test
         run: dotnet test Orion.slnx --no-build -c Release
 
-  # Roda num runner self-hosted (instalado na sua rede on-premise, com acesso
-  # ao SQL Server) — um runner hospedado pelo GitHub não alcançaria o banco.
-  # Configuração: Settings → Actions → Runners → New self-hosted runner no
-  # repositório, instalado numa máquina que já enxergue o SQL Server.
-  migrate:
-    needs: test
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Install dotnet-ef
-        run: |
-          dotnet tool install --global dotnet-ef
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
-
-      - name: Apply Users module migrations
-        run: >
-          dotnet ef database update
-          --project src/Modules/Users/Users.csproj
-          --startup-project src/Api/Api.csproj
-        env:
-          ConnectionStrings__DatabaseConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          Jwt__SigningKey: ${{ secrets.JWT_SIGNING_KEY }}
-
-      - name: Apply Authentication module migrations
-        run: >
-          dotnet ef database update
-          --project src/Modules/Authentication/Authentication.csproj
-          --startup-project src/Api/Api.csproj
-          --context AuthenticationDbContext
-        env:
-          ConnectionStrings__DatabaseConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          Jwt__SigningKey: ${{ secrets.JWT_SIGNING_KEY }}
-
   # Não builda nem publica imagem aqui — o app "Compose" no Dokploy já está
   # ligado ao repo via GitHub App e cuida de clonar/buildar sozinho. Este job
-  # só avisa o Dokploy "pode deployar agora", depois que migrate passou —
-  # isso evita o container novo subir antes do schema estar pronto.
+  # só avisa o Dokploy "pode deployar agora", depois que os testes passaram.
+  #
+  # Migration não roda aqui de propósito: um runner do GitHub (mesmo
+  # self-hosted) é um risco real de execução de código nesse repositório,
+  # que é público — quem migra é a própria app, no próprio startup, dentro
+  # da rede on-premise (ver RUN_MIGRATIONS no Program.cs/docker-compose.yml).
   #
   # Pré-requisito: desligue o toggle "Auto Deploy" da aplicação no painel do
   # Dokploy. Senão o Dokploy tenta deployar direto no push (via GitHub App),
-  # em paralelo com este workflow, e a ordem test → migrate → deploy deixa
-  # de ser garantida.
+  # em paralelo com este workflow, e código com teste quebrado poderia subir
+  # antes desse job barrar.
   deploy:
-    needs: migrate
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Disparar deploy no Dokploy

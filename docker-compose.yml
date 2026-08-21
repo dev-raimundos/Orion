@@ -9,16 +9,21 @@ services:
     restart: unless-stopped
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      # Sem "=valor": Compose só passa essas variáveis pro container se elas
-      # existirem no ambiente/.env de quem roda o compose (ex.: o painel de
-      # env vars do Dokploy). Em dev local, ficam ausentes de propósito, pra
-      # a app cair no fallback dos user-secrets em vez de herdar um valor
-      # vazio que sobrescreveria o secret.
-      - ConnectionStrings__DatabaseConnection
-      - Jwt__Issuer
-      - Jwt__Audience
-      - Jwt__ExpirationMinutes
-      - Jwt__SigningKey
+      # Interpolação explícita "${VAR}": o Dokploy escreve as variáveis que
+      # você configura no painel da aplicação num .env que ele mesmo gerencia,
+      # mas só entrega isso pro container se o compose referenciar cada uma
+      # explicitamente assim — passar só o nome da variável (sem "=") NÃO
+      # funciona com o Dokploy (raiz do erro "Connection string não
+      # configurada" ao deployar).
+      - ConnectionStrings__DatabaseConnection=${DATABASE_CONNECTION_STRING}
+      - Jwt__Issuer=${JWT_ISSUER:-Orion}
+      - Jwt__Audience=${JWT_AUDIENCE:-Orion.Clients}
+      - Jwt__ExpirationMinutes=${JWT_EXPIRATION_MINUTES:-60}
+      - Jwt__SigningKey=${JWT_SIGNING_KEY}
+      # Aplica as migrations pendentes de Users e Authentication no startup.
+      # Fica "false" por padrão — ligue "true" no painel do Dokploy só quando
+      # quiser mesmo aplicar migration nesse deploy específico.
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-false}
     # "expose" (não "ports"): a porta só fica alcançável por outros containers
     # na mesma rede Docker (o proxy do Dokploy/Traefik, nesse caso) — não é
     # publicada no host. Ninguém acessa a API sem passar pelo proxy/TLS.
