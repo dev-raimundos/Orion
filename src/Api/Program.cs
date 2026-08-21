@@ -1,3 +1,5 @@
+using Api.Common;
+using Api.Modules.Users.Infrastructure;
 
 namespace Api;
 
@@ -10,12 +12,19 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
 
+        builder.Services.AddUsersModule(builder.Configuration);
+
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
+
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
         }
+
+        app.UseExceptionHandler();
 
         app.UseHttpsRedirection();
 

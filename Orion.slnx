@@ -1,9 +1,8 @@
 <Solution>
-  <Folder Name="/Modules/">
-    <Project Path="src/Modules/Authentication/Authentication.csproj" Id="a987b2ea-8dc2-4d00-8d99-b35b5763bbe0" />
-    <Project Path="src/Modules/Users/Users.csproj" Id="033f3f23-7bd9-41fd-a78c-857c5da893fc" />
-  </Folder>
   <Folder Name="/Tests/" />
+  <Folder Name="/Tests/Architecture/">
+    <Project Path="src/Tests/Architecture/Architecture.csproj" />
+  </Folder>
   <Folder Name="/Tests/Modules/">
     <Project Path="src/Tests/Modules/Users/Users.csproj" Id="c682209b-e053-4b6a-85d3-3752ca6a4b1c" />
   </Folder>
@@ -11,7 +10,4 @@
     <Build />
   </Project>
   <Project Path="src/Api/Api.csproj" />
-  <Project Path="src/Orion.Application/Orion.Application.csproj" Id="daa84e59-2f29-4991-b148-af5801c7810c" />
-  <Project Path="src/Orion.Infrastructure/Orion.Infrastructure.csproj" Id="dd4bd834-d48d-4e91-bba4-0d712b6337c6" />
-  <Project Path="src/Orion.SharedKernel/Orion.SharedKernel.csproj" Id="4823aa0c-a6fb-40d1-9f5d-d86322724852" />
 </Solution>
