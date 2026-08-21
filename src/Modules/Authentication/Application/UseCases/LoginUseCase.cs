@@ -7,16 +7,20 @@ using Authentication.Domain.Abstractions;
 namespace Authentication.Application.UseCases;
 
 public sealed record LoginRequest(string Email, string Password);
-public sealed record LoginResult(string AccessToken, DateTimeOffset ExpiresAt);
+public sealed record LoginResult(string AccessToken, DateTimeOffset ExpiresAt, string RefreshToken);
 
 public class LoginUseCase(
     IUserCredentialsChecker credentialsChecker,
     ITokenGenerator tokenGenerator,
-    ILoginAttemptRepository loginAttempts)
+    IRefreshTokenGenerator refreshTokenGenerator,
+    ILoginAttemptRepository loginAttempts,
+    IRefreshTokenRepository refreshTokens)
 {
     private readonly IUserCredentialsChecker _credentialsChecker = credentialsChecker;
     private readonly ITokenGenerator _tokenGenerator = tokenGenerator;
+    private readonly IRefreshTokenGenerator _refreshTokenGenerator = refreshTokenGenerator;
     private readonly ILoginAttemptRepository _loginAttempts = loginAttempts;
+    private readonly IRefreshTokenRepository _refreshTokens = refreshTokens;
 
     public async Task<LoginResult> ExecuteAsync(LoginRequest request, CancellationToken ct)
     {
@@ -34,8 +38,12 @@ public class LoginUseCase(
         if (authenticatedUser is null)
             throw new AppUnauthorizedException("Email ou senha inválidos.");
 
-        var (token, expiresAt) = _tokenGenerator.Generate(authenticatedUser.Id, authenticatedUser.Email);
+        var (accessToken, expiresAt) = _tokenGenerator.Generate(authenticatedUser.Id, authenticatedUser.Email);
 
-        return new LoginResult(token, expiresAt);
+        var (refreshToken, refreshTokenHash) = _refreshTokenGenerator.Generate();
+        var refreshTokenEntity = RefreshToken.Create(authenticatedUser.Id, authenticatedUser.Email, refreshTokenHash, RefreshTokenPolicy.Lifetime);
+        await _refreshTokens.AddAsync(refreshTokenEntity, ct);
+
+        return new LoginResult(accessToken, expiresAt, refreshToken);
     }
 }

@@ -22,8 +22,12 @@ public static class AuthenticationModuleExtensions
             .AddDbContextCheck<AuthenticationDbContext>(name: "authentication-db");
 
         services.AddScoped<ILoginAttemptRepository, LoginAttemptRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ITokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddScoped<LoginUseCase>();
+        services.AddScoped<RefreshTokenUseCase>();
+        services.AddScoped<LogoutUseCase>();
 
         return services;
     }
