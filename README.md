@@ -19,6 +19,7 @@ Projeto construído com propósito duplo: consolidar estudo de ASP.NET Core e ar
 - [Testes](#testes)
 - [Como rodar localmente](#como-rodar-localmente)
 - [Docker](#docker)
+- [CI/CD](#cicd)
 - [Estrutura de pastas](#estrutura-de-pastas)
 - [Limitações conhecidas / roadmap](#limitações-conhecidas--roadmap)
 
@@ -99,7 +100,10 @@ Dono da autenticação: login, emissão de JWT e bloqueio de conta por tentativa
 ## Segurança
 
 - **Hash de senha**: `PasswordHasher<User>` do ASP.NET Core Identity (PBKDF2-HMACSHA256, 100k iterações, salt aleatório) — mantido oficialmente pela Microsoft, sem dependência de terceiro.
-- **Autenticação**: JWT Bearer assinado com HMAC-SHA256. Claims: `sub` (id do usuário), `email`, `jti`.
+- **Autenticação**: JWT Bearer assinado com HMAC-SHA256. Claims: `sub` (id do usuário), `email`, `jti`. `MapInboundClaims = false` garante que essas claims cheguem intactas no `HttpContext.User`, sem o remapeamento legado do .NET.
+- **Autorização**: endpoints de Users exigem `[Authorize]` e checam que o dono do token (`sub`) é o mesmo `{id}` da rota — outro usuário autenticado recebe 403, não 200. `POST /api/users` e todo `/api/auth/*` são públicos por natureza (registro e login/refresh não têm token ainda).
+- **Refresh token**: emitido junto do access token no login (`Authentication.Domain.RefreshToken`), com rotação — cada `POST /api/auth/refresh` revoga o token usado e emite um novo par. Reuso de um refresh token já rotacionado ou revogado é rejeitado (401).
+- **Logout**: `POST /api/auth/logout` revoga o refresh token informado. Não invalida o access token já emitido (ele expira sozinho pelo `exp`, curto por design).
 - **Bloqueio de conta** (`Authentication.Domain.LoginLockoutPolicy`): 5 tentativas de login falhas em uma janela de 15 minutos bloqueiam novas tentativas — inclusive com a senha correta — até 15 minutos após a última falha. Cada tentativa (sucesso ou falha) é registrada em `auth.LoginAttempts`.
 
 ## Tratamento de erros
@@ -120,21 +124,27 @@ Toda exceção de domínio/aplicação herda de `AppException` e carrega um `Err
 
 ### Users — `/api/users`
 
-| Método | Rota | Ação |
-|---|---|---|
-| `POST` | `/api/users` | Cria usuário |
-| `GET` | `/api/users/{id}` | Busca usuário por id |
-| `PUT` | `/api/users/{id}/name` | Renomeia |
-| `PUT` | `/api/users/{id}/password` | Troca senha |
-| `POST` | `/api/users/{id}/verify-email` | Marca email como verificado |
-| `POST` | `/api/users/{id}/activate` | Ativa |
-| `POST` | `/api/users/{id}/deactivate` | Desativa |
+Todos exigem `Authorization: Bearer <token>`, exceto a criação. Todos (exceto a criação) só aceitam operar sobre o `{id}` do próprio token — outro usuário autenticado recebe 403.
+
+| Método | Rota | Ação | Auth |
+|---|---|---|---|
+| `POST` | `/api/users` | Cria usuário | público |
+| `GET` | `/api/users/{id}` | Busca usuário por id | `[Authorize]` + dono |
+| `PUT` | `/api/users/{id}/name` | Renomeia | `[Authorize]` + dono |
+| `PUT` | `/api/users/{id}/password` | Troca senha | `[Authorize]` + dono |
+| `POST` | `/api/users/{id}/verify-email` | Marca email como verificado | `[Authorize]` + dono |
+| `POST` | `/api/users/{id}/activate` | Ativa | `[Authorize]` + dono |
+| `POST` | `/api/users/{id}/deactivate` | Desativa | `[Authorize]` + dono |
 
 ### Authentication — `/api/auth`
 
+Todos públicos — são justamente os endpoints usados antes de (ou sem) ter um access token válido.
+
 | Método | Rota | Ação |
 |---|---|---|
-| `POST` | `/api/auth/login` | Login — retorna JWT |
+| `POST` | `/api/auth/login` | Login — retorna access token + refresh token |
+| `POST` | `/api/auth/refresh` | Troca um refresh token válido por um novo par (rotação) |
+| `POST` | `/api/auth/logout` | Revoga um refresh token |
 
 ### Infra
 
@@ -182,6 +192,32 @@ Dois caminhos, propositalmente separados:
   ```
   Segredos entram via variável de ambiente (`ConnectionStrings__DatabaseConnection`, `Jwt__SigningKey`), não via arquivo. A imagem expõe `HEALTHCHECK` batendo em `/health`.
 
+## CI/CD
+
+`.github/workflows/deploy.yml` roda a cada push em `main` (ou manualmente via `workflow_dispatch`), em quatro estágios sequenciais:
+
+1. **test** — `dotnet build` + `dotnet test` na solução inteira.
+2. **migrate** — aplica as migrations pendentes de `Users` e `Authentication` contra o banco de produção (`dotnet ef database update`, um por módulo). Assume migration aditiva; uma migration destrutiva precisaria de uma estratégia diferente (expand-and-contract em duas releases). **Condicional**, não roda sempre — ver abaixo.
+3. **build-and-push** — builda a imagem via `src/Api/Dockerfile` e publica no GitHub Container Registry (`ghcr.io`), tag `latest` + tag pelo SHA do commit. Roda mesmo se `migrate` for pulado.
+4. **deploy** — conecta via SSH no servidor on-premise, dá `docker compose pull` + `up -d` usando `docker-compose.yml` + `docker-compose.prod.yml`. Assume o repo (só os arquivos `docker-compose*.yml` e o `.env` de produção) já presente em `/opt/orion` no servidor — ajuste esse caminho se o seu for outro.
+
+### Ligar/desligar a migration por variável de ambiente
+
+O estágio `migrate` não roda incondicionalmente — ele é controlado por uma variável `true`/`false`, não por um valor fixo no YAML:
+
+- **Push em `main`** (automático): controlado pela variável de repositório `RUN_MIGRATIONS` (Settings → Secrets and variables → Actions → **Variables**, não Secrets, já que não é sensível). Ausente ou diferente de `"true"` = não roda.
+- **Disparo manual** (`Actions` → `Deploy` → `Run workflow`): tem um checkbox `run_migrations` que sobrepõe a variável do repositório só pra aquela execução — útil pra, por exemplo, forçar rodar sem mexer na configuração do repo, ou pra pular a migration num deploy que você sabe que não mudou schema.
+
+Secrets necessários no repositório GitHub (Settings → Secrets and variables → Actions → **Secrets**):
+
+| Secret | Usado em |
+|---|---|
+| `DATABASE_CONNECTION_STRING` | `migrate` |
+| `JWT_SIGNING_KEY` | `migrate` (a checagem em `Program.cs` roda mesmo só pra gerar a migration) |
+| `DEPLOY_HOST` / `DEPLOY_USER` / `DEPLOY_SSH_KEY` | `deploy` |
+
+Os jobs `migrate` e `deploy` usam `environment: production` — se você configurar um [environment protegido](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) no GitHub com regra de aprovação manual, esses dois estágios passam a esperar aprovação antes de rodar.
+
 ## Estrutura de pastas
 
 ```
@@ -198,8 +234,8 @@ src/
 
 ## Limitações conhecidas / roadmap
 
-- Nenhum endpoint exige `[Authorize]` ainda — o JWT é emitido, mas nada valida ele hoje.
-- Sem refresh token / logout / revogação de token.
-- `auth.LoginAttempts` cresce indefinidamente — não há expurgo de registros antigos.
+- Sem papéis/admin — a regra de autorização hoje é só "é o dono do recurso"; não existe um usuário que possa agir em nome de outro.
+- `auth.LoginAttempts` e `auth.RefreshTokens` (revogados/expirados) crescem indefinidamente — não há expurgo de registros antigos.
 - Bloqueio de login é só por email, não por IP/dispositivo.
-- Aplicação de migration em produção ainda é manual (`dotnet ef database update`), sem pipeline de deploy.
+- Access token não é revogável antes de expirar (só o refresh token é) — se precisar de revogação imediata de sessão, precisaria de uma denylist de `jti` ou tokens de vida mais curta.
+- O job `deploy` assume um caminho fixo (`/opt/orion`) no servidor on-premise — se a estrutura de pastas do seu servidor for outra, ajuste o `cd` no workflow.
