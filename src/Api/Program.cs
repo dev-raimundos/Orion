@@ -10,7 +10,7 @@ namespace Api;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -65,6 +65,12 @@ public class Program
 
         var app = builder.Build();
 
+        if (builder.Configuration.GetValue<bool>("RUN_MIGRATIONS"))
+        {
+            await app.Services.MigrateUsersModuleAsync();
+            await app.Services.MigrateAuthenticationModuleAsync();
+        }
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
@@ -84,6 +90,6 @@ public class Program
         app.MapControllers();
         app.MapHealthChecks("/health");
 
-        app.Run();
+        await app.RunAsync();
     }
 }

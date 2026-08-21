@@ -12,6 +12,7 @@ services:
       - Jwt__Audience=${JWT_AUDIENCE:-Orion.Clients}
       - Jwt__ExpirationMinutes=${JWT_EXPIRATION_MINUTES:-60}
       - Jwt__SigningKey=${JWT_SIGNING_KEY}
+      - RUN_MIGRATIONS=${RUN_MIGRATIONS:-false}
     ports:
       - "8080:8080"
     healthcheck:

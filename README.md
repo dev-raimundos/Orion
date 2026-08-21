@@ -194,29 +194,30 @@ Dois caminhos, propositalmente separados:
 
 ## CI/CD
 
-`.github/workflows/deploy.yml` roda a cada push em `main` (ou manualmente via `workflow_dispatch`), em quatro estágios sequenciais:
+`.github/workflows/deploy.yml` roda a cada push em `main` (ou manualmente via `workflow_dispatch`), em três estágios sequenciais:
 
 1. **test** — `dotnet build` + `dotnet test` na solução inteira.
-2. **migrate** — aplica as migrations pendentes de `Users` e `Authentication` contra o banco de produção (`dotnet ef database update`, um por módulo). Assume migration aditiva; uma migration destrutiva precisaria de uma estratégia diferente (expand-and-contract em duas releases). **Condicional**, não roda sempre — ver abaixo.
-3. **build-and-push** — builda a imagem via `src/Api/Dockerfile` e publica no GitHub Container Registry (`ghcr.io`), tag `latest` + tag pelo SHA do commit. Roda mesmo se `migrate` for pulado.
-4. **deploy** — conecta via SSH no servidor on-premise, dá `docker compose pull` + `up -d` usando `docker-compose.yml` + `docker-compose.prod.yml`. Assume o repo (só os arquivos `docker-compose*.yml` e o `.env` de produção) já presente em `/opt/orion` no servidor — ajuste esse caminho se o seu for outro.
+2. **build-and-push** — builda a imagem via `src/Api/Dockerfile` e publica no GitHub Container Registry (`ghcr.io`), tag `latest` + tag pelo SHA do commit.
+3. **deploy** — conecta via SSH no servidor on-premise, e dá `docker compose pull` + `up -d` usando `docker-compose.yml` + `docker-compose.prod.yml`. Assume o repo (só os arquivos `docker-compose*.yml` e o `.env` de produção) já presente em `/opt/orion` no servidor — ajuste esse caminho se o seu for outro.
 
-### Ligar/desligar a migration por variável de ambiente
+### Por que a migration não é um job da pipeline
 
-O estágio `migrate` não roda incondicionalmente — ele é controlado por uma variável `true`/`false`, não por um valor fixo no YAML:
+Um runner do GitHub roda na nuvem — ele não alcançaria um SQL Server on-premise sem exposição pra internet. Em vez disso, **a própria aplicação aplica as migrations pendentes no startup** (`Program.cs`, via `MigrateUsersModuleAsync`/`MigrateAuthenticationModuleAsync`), controlada pela variável de ambiente `RUN_MIGRATIONS` — que só existe dentro da rede onde o container roda, exatamente onde o banco está acessível.
 
-- **Push em `main`** (automático): controlado pela variável de repositório `RUN_MIGRATIONS` (Settings → Secrets and variables → Actions → **Variables**, não Secrets, já que não é sensível). Ausente ou diferente de `"true"` = não roda.
-- **Disparo manual** (`Actions` → `Deploy` → `Run workflow`): tem um checkbox `run_migrations` que sobrepõe a variável do repositório só pra aquela execução — útil pra, por exemplo, forçar rodar sem mexer na configuração do repo, ou pra pular a migration num deploy que você sabe que não mudou schema.
+`RUN_MIGRATIONS` é `false` por padrão (ver `docker-compose.prod.yml`/`.env.production.example`) — ligar migration em todo deploy não é obrigatório nem sempre desejável. A pipeline liga essa variável assim:
+
+- **Push em `main`** (automático): usa a variável de repositório `RUN_MIGRATIONS` (Settings → Secrets and variables → Actions → **Variables**, não Secrets, já que não é sensível) como valor padrão.
+- **Disparo manual** (`Actions` → `Deploy` → `Run workflow`): tem um checkbox `run_migrations` que sobrepõe a variável do repositório só pra aquela execução.
+
+`Database.MigrateAsync()` é idempotente (só aplica o que estiver pendente) e usa lock a nível de banco (`__EFMigrationsLock`) — rodar com `RUN_MIGRATIONS=true` em todo restart não causa problema, só custa uma checagem a mais no startup.
 
 Secrets necessários no repositório GitHub (Settings → Secrets and variables → Actions → **Secrets**):
 
 | Secret | Usado em |
 |---|---|
-| `DATABASE_CONNECTION_STRING` | `migrate` |
-| `JWT_SIGNING_KEY` | `migrate` (a checagem em `Program.cs` roda mesmo só pra gerar a migration) |
 | `DEPLOY_HOST` / `DEPLOY_USER` / `DEPLOY_SSH_KEY` | `deploy` |
 
-Os jobs `migrate` e `deploy` usam `environment: production` — se você configurar um [environment protegido](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) no GitHub com regra de aprovação manual, esses dois estágios passam a esperar aprovação antes de rodar.
+O job `deploy` usa `environment: production` — se você configurar um [environment protegido](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment) no GitHub com regra de aprovação manual, esse estágio passa a esperar aprovação antes de rodar.
 
 ## Estrutura de pastas
 

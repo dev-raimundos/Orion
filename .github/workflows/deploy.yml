@@ -8,7 +8,7 @@ on:
       run_migrations:
         description: "Aplicar as migrations do EF Core neste deploy?"
         type: boolean
-        default: true
+        default: false
 
 env:
   DOTNET_VERSION: "10.0.x"
@@ -36,63 +36,13 @@ jobs:
       - name: Test
         run: dotnet test Orion.slnx --no-build -c Release
 
-  # Aplica as migrations pendentes de cada módulo contra o banco de produção.
-  # Assume migrations aditivas (CreateTable/AddColumn) — código antigo rodando
-  # contra schema novo não quebra. Migration destrutiva (DROP/rename) precisa
-  # de estratégia diferente (ex.: expand-and-contract em duas releases).
-  #
-  # Controlado por uma variável true/false, não hardcoded:
-  # - push em main: usa a variável de repositório/ambiente "RUN_MIGRATIONS"
-  #   (Settings → Secrets and variables → Actions → Variables). Ausente = não roda.
-  # - workflow_dispatch manual: usa o input "run_migrations" do próprio disparo,
-  #   sobrepondo a variável do repositório pra aquela execução.
-  migrate:
-    needs: test
-    if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.run_migrations == true) ||
-      (github.event_name != 'workflow_dispatch' && vars.RUN_MIGRATIONS == 'true')
-    runs-on: ubuntu-latest
-    environment: production
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: Install dotnet-ef
-        run: |
-          dotnet tool install --global dotnet-ef
-          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
-
-      - name: Apply Users module migrations
-        run: >
-          dotnet ef database update
-          --project src/Modules/Users/Users.csproj
-          --startup-project src/Api/Api.csproj
-        env:
-          ConnectionStrings__DatabaseConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          Jwt__SigningKey: ${{ secrets.JWT_SIGNING_KEY }}
-
-      - name: Apply Authentication module migrations
-        run: >
-          dotnet ef database update
-          --project src/Modules/Authentication/Authentication.csproj
-          --startup-project src/Api/Api.csproj
-          --context AuthenticationDbContext
-        env:
-          ConnectionStrings__DatabaseConnection: ${{ secrets.DATABASE_CONNECTION_STRING }}
-          Jwt__SigningKey: ${{ secrets.JWT_SIGNING_KEY }}
-
-  # "needs: migrate" sozinho pularia este job em cascata quando migrate for
-  # pulado por causa do "if:" acima — o "if:" abaixo trata skip como sucesso.
+  # Migration não roda aqui: um runner do GitHub na nuvem não alcançaria um SQL
+  # Server on-premise sem exposição pra internet. A própria aplicação aplica as
+  # migrations pendentes no startup, controlada pela env var RUN_MIGRATIONS
+  # (ver Program.cs e docker-compose.prod.yml) — o job "deploy" abaixo só liga
+  # essa variável, quem roda a migration de fato é o container já dentro da rede.
   build-and-push:
-    needs: [test, migrate]
-    if: >-
-      always() &&
-      needs.test.result == 'success' &&
-      (needs.migrate.result == 'success' || needs.migrate.result == 'skipped')
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -117,10 +67,9 @@ jobs:
             ${{ env.DOCKER_REGISTRY }}api:latest
             ${{ env.DOCKER_REGISTRY }}api:${{ github.sha }}
 
-  # PLACEHOLDER: assume um host Docker acessível via SSH com o repo (docker-compose*.yml)
+  # Assume um host Docker on-premise acessível via SSH, com o repo (docker-compose*.yml)
   # já clonado em /opt/orion e um ".env" de produção configurado lá (ver .env.production.example).
-  # Se o destino real for Azure/AWS/Kubernetes, troque este job pela action específica
-  # do provedor (ex.: azure/webapps-deploy, aws-actions/*, etc).
+  # Ajuste o "cd" se o caminho no seu servidor for outro.
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
@@ -137,5 +86,6 @@ jobs:
             cd /opt/orion
             export DOCKER_REGISTRY=${{ env.DOCKER_REGISTRY }}
             export TAG=${{ github.sha }}
+            export RUN_MIGRATIONS=${{ (github.event_name == 'workflow_dispatch' && inputs.run_migrations == true) || (github.event_name != 'workflow_dispatch' && vars.RUN_MIGRATIONS == 'true') }}
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
