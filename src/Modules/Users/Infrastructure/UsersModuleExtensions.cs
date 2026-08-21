@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Orion.Application.Contracts;
 using Users.Application.Abstractions;
 using Users.Application.UseCases;
 using Users.Domain.Abstractions;
@@ -20,6 +21,7 @@ public static class UsersModuleExtensions
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IUserCredentialsChecker, UserCredentialsChecker>();
 
         services.AddScoped<CreateUserUseCase>();
         services.AddScoped<GetUserByIdUseCase>();
