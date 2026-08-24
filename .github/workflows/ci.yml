@@ -42,7 +42,7 @@ jobs:
   # deploya código com teste passando. Pra ter esse gate de verdade, seria
   # necessário desligar o Auto Deploy e trocar essa chamada pela API de
   # deploy manual (/api/compose.deploy, com x-api-key + composeId), que não
-  # depende desse toggle.
+  # depende desse toggle
   deploy:
     needs: test
     if: github.event_name == 'push'
