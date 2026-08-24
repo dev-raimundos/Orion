@@ -27,6 +27,7 @@ public static class Program
         builder.Services.AddProblemDetails();
 
         builder.Services.AddReverseProxyForwardedHeaders();
+        builder.Services.AddAuthRateLimiting();
 
         var app = builder.Build();
 
@@ -35,6 +36,8 @@ public static class Program
         app.UseExceptionHandler();
 
         app.UseForwardedHeaders();
+
+        app.UseRateLimiter();
 
         if (app.Environment.IsDevelopment())
         {

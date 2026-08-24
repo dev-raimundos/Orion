@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Authentication.Application.UseCases;
 
 namespace Authentication.Infrastructure.Web;
@@ -7,6 +8,7 @@ namespace Authentication.Infrastructure.Web;
 [ApiController]
 [Route("api/auth")]
 [AllowAnonymous]
+[EnableRateLimiting("auth")]
 public class RefreshTokenController(RefreshTokenUseCase refreshToken) : ControllerBase
 {
     private readonly RefreshTokenUseCase _refreshToken = refreshToken;

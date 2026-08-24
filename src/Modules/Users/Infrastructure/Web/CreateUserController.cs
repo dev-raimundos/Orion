@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Users.Application.UseCases;
 
 namespace Users.Infrastructure.Web;
 
 [ApiController]
 [Route("api/users")]
-[Authorize]
+[AllowAnonymous]
+[EnableRateLimiting("auth")]
 public class CreateUserController(CreateUserUseCase createUser) : ControllerBase
 {
     private readonly CreateUserUseCase _createUser = createUser;
