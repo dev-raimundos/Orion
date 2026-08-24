@@ -29,3 +29,20 @@ jobs:
 
       - name: Test
         run: dotnet test Orion.slnx --no-build -c Release
+
+  # Só dispara em push na main (não em pull_request) e só depois que os
+  # testes passarem. A URL do secret DOKPLOY_WEBHOOK_URL já É a credencial
+  # (sem x-api-key separado) — por isso vive só como secret, nunca aparece
+  # hardcoded aqui nem em nenhum arquivo committado.
+  #
+  # Pré-requisito: desligue o toggle "Auto Deploy" da aplicação no painel do
+  # Dokploy. Senão o Dokploy tenta deployar direto no push (via GitHub App),
+  # em paralelo a este job, e código com teste quebrado poderia subir antes
+  # dele barrar.
+  deploy:
+    needs: test
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar deploy no Dokploy
+        run: curl --fail -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
