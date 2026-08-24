@@ -21,7 +21,6 @@ Projeto construído com propósito duplo: consolidar estudo de ASP.NET Core e ar
 - [Docker](#docker)
 - [CI/CD](#cicd)
 - [Estrutura de pastas](#estrutura-de-pastas)
-- [Limitações conhecidas / roadmap](#limitações-conhecidas--roadmap)
 
 ## Arquitetura
 
@@ -234,10 +233,3 @@ src/
     └── Modules/Users/            testes unitários do módulo Users
 ```
 
-## Limitações conhecidas / roadmap
-
-- Sem papéis/admin — a regra de autorização hoje é só "é o dono do recurso"; não existe um usuário que possa agir em nome de outro.
-- `auth.LoginAttempts` e `auth.RefreshTokens` (revogados/expirados) crescem indefinidamente — não há expurgo de registros antigos.
-- Bloqueio de login é só por email, não por IP/dispositivo.
-- Access token não é revogável antes de expirar (só o refresh token é) — se precisar de revogação imediata de sessão, precisaria de uma denylist de `jti` ou tokens de vida mais curta.
-- O job `migrate` depende de um runner self-hosted já registrado e configurado — se ele cair ou não existir, a pipeline para nesse estágio (por design: melhor parar do que seguir sem aplicar migration).
