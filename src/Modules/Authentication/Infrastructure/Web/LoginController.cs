@@ -18,4 +18,3 @@ public class LoginController(LoginUseCase login) : ControllerBase
         return Ok(result);
     }
 }
-
