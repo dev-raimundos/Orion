@@ -4,7 +4,7 @@ namespace Authentication.Domain;
 
 public class LoginAttempt : Entity<Guid>
 {
-    public string Email { get; private set; }
+    public string Email { get; private set; } = null!;
     public bool Succeeded { get; private set; }
     public DateTimeOffset AttemptedAt { get; private set; }
 

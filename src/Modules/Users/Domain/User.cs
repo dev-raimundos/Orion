@@ -4,9 +4,9 @@ namespace Users.Domain;
 
 public class User : Entity<Guid>
 {
-    public string Name { get; private set; }
-    public string Email { get; private set; }
-    public string PasswordHash { get; private set; }
+    public string Name { get; private set; } = null!;
+    public string Email { get; private set; } = null!;
+    public string PasswordHash { get; private set; } = null!;
     public bool Active { get; private set; }
     public bool EmailVerified { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }

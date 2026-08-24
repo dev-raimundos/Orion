@@ -5,8 +5,8 @@ namespace Authentication.Domain;
 public class RefreshToken : Entity<Guid>
 {
     public Guid UserId { get; private set; }
-    public string Email { get; private set; }
-    public string TokenHash { get; private set; }
+    public string Email { get; private set; } = null!;
+    public string TokenHash { get; private set; } = null!;
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset ExpiresAt { get; private set; }
     public DateTimeOffset? RevokedAt { get; private set; }
