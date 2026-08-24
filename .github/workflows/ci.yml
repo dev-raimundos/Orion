@@ -43,6 +43,7 @@ jobs:
     needs: test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Disparar deploy no Dokploy
         run: curl --fail -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
