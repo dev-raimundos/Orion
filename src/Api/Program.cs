@@ -1,3 +1,4 @@
+using Api.Diagnostics;
 using Api.Exceptions;
 using Api.Migrations;
 using Api.OpenApi;
@@ -44,6 +45,10 @@ public static class Program
             });
             app.MapGet("/", () => Results.Redirect("/swagger"));
             app.UseHttpsRedirection();
+        }
+        else
+        {
+            app.MapStatusPage();
         }
 
         app.UseAuthentication();
