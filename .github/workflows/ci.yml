@@ -45,5 +45,18 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
+      # O webhook do Dokploy não é um endpoint genérico: ele espera um payload
+      # no formato de um webhook real do GitHub (header X-GitHub-Event: push +
+      # body com "ref" e "repository.full_name") pra saber de qual branch veio
+      # e comparar com a branch configurada na aplicação. Sem isso ele responde
+      # 200 com {"message":"Branch Not Match"} e não deploya nada.
       - name: Disparar deploy no Dokploy
-        run: curl --fail -X POST "${{ secrets.DOKPLOY_WEBHOOK_URL }}"
+        env:
+          WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
+          REF: ${{ github.ref }}
+          REPO_FULL_NAME: ${{ github.repository }}
+        run: |
+          curl --fail -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: push" \
+            -d "{\"ref\":\"$REF\",\"repository\":{\"full_name\":\"$REPO_FULL_NAME\"}}"
