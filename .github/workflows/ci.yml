@@ -29,31 +29,12 @@ jobs:
 
       - name: Test
         run: dotnet test Orion.slnx --no-build -c Release
-
-  # Só dispara em push na main (não em pull_request) e só depois que os
-  # testes passarem. A URL do secret DOKPLOY_WEBHOOK_URL já É a credencial
-  # (sem x-api-key separado) — por isso vive só como secret, nunca aparece
-  # hardcoded aqui nem em nenhum arquivo committado.
-  #
-  # Atenção: essa rota de webhook só funciona com o toggle "Auto Deploy" da
-  # aplicação LIGADO no painel do Dokploy (exigência do próprio Dokploy).
-  # Como consequência, o Dokploy também deploya sozinho a cada push via
-  # GitHub App, em paralelo a este job — hoje não há garantia de que só
-  # deploya código com teste passando. Pra ter esse gate de verdade, seria
-  # necessário desligar o Auto Deploy e trocar essa chamada pela API de
-  # deploy manual (/api/compose.deploy, com x-api-key + composeId), que não
-  # depende desse toggle
   deploy:
     needs: test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: production
     steps:
-      # O webhook do Dokploy não é um endpoint genérico: ele espera um payload
-      # no formato de um webhook real do GitHub (header X-GitHub-Event: push +
-      # body com "ref" e "repository.full_name") pra saber de qual branch veio
-      # e comparar com a branch configurada na aplicação. Sem isso ele responde
-      # 200 com {"message":"Branch Not Match"} e não deploya nada.
       - name: Disparar deploy no Dokploy
         env:
           WEBHOOK_URL: ${{ secrets.DOKPLOY_WEBHOOK_URL }}
