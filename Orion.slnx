@@ -8,6 +8,7 @@
     <Project Path="src/Tests/Architecture/Architecture.csproj" />
   </Folder>
   <Folder Name="/Tests/Modules/">
+    <Project Path="src/Tests/Modules/Authentication/Authentication.Tests.csproj" />
     <Project Path="src/Tests/Modules/Users/Users.Tests.csproj" Id="c682209b-e053-4b6a-85d3-3752ca6a4b1c" />
   </Folder>
   <Project Path="docker-compose.dcproj">
