@@ -35,10 +35,14 @@ jobs:
   # (sem x-api-key separado) — por isso vive só como secret, nunca aparece
   # hardcoded aqui nem em nenhum arquivo committado.
   #
-  # Pré-requisito: desligue o toggle "Auto Deploy" da aplicação no painel do
-  # Dokploy. Senão o Dokploy tenta deployar direto no push (via GitHub App),
-  # em paralelo a este job, e código com teste quebrado poderia subir antes
-  # dele barrar.
+  # Atenção: essa rota de webhook só funciona com o toggle "Auto Deploy" da
+  # aplicação LIGADO no painel do Dokploy (exigência do próprio Dokploy).
+  # Como consequência, o Dokploy também deploya sozinho a cada push via
+  # GitHub App, em paralelo a este job — hoje não há garantia de que só
+  # deploya código com teste passando. Pra ter esse gate de verdade, seria
+  # necessário desligar o Auto Deploy e trocar essa chamada pela API de
+  # deploy manual (/api/compose.deploy, com x-api-key + composeId), que não
+  # depende desse toggle.
   deploy:
     needs: test
     if: github.event_name == 'push'
@@ -56,12 +60,6 @@ jobs:
           REF: ${{ github.ref }}
           REPO_FULL_NAME: ${{ github.repository }}
         run: |
-          # Debug temporário: só o tamanho da string, nunca o conteúdo do
-          # secret. Serve pra descartar espaço/quebra de linha colados sem
-          # querer no valor do secret (causa comum de 404 "token não
-          # encontrado" nesse tipo de URL).
-          echo "Tamanho de WEBHOOK_URL: ${#WEBHOOK_URL} caracteres"
-
           curl --fail -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: push" \
