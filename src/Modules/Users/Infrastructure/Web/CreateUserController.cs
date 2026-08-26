@@ -8,7 +8,7 @@ namespace Users.Infrastructure.Web;
 
 [ApiController]
 [Route("api/users")]
-[AllowAnonymous]
+[Authorize]
 [EnableRateLimiting("auth")]
 [Tags("Usuários")]
 public class CreateUserController(CreateUserUseCase createUser) : ControllerBase
