@@ -5,7 +5,10 @@ public static class LoginLockoutPolicy
     public const int MaxFailedAttempts = 5;
     public static readonly TimeSpan Window = TimeSpan.FromMinutes(15);
 
-    public static bool IsLockedOut(IReadOnlyCollection<LoginAttempt> recentAttempts, DateTimeOffset now, out DateTimeOffset? lockedUntil)
+    public static bool IsLockedOut(
+        IReadOnlyCollection<LoginAttempt> recentAttempts, 
+        DateTimeOffset now, 
+        out DateTimeOffset? lockedUntil)
     {
         var failures = recentAttempts
             .Where(a => !a.Succeeded)

@@ -1,9 +1,9 @@
-using Orion.SharedKernel;
-using Orion.SharedKernel.Contracts;
-
 using Authentication.Application.Abstractions;
 using Authentication.Domain;
 using Authentication.Domain.Abstractions;
+
+using Orion.SharedKernel;
+using Orion.SharedKernel.Contracts;
 
 namespace Authentication.Application.UseCases;
 
@@ -27,8 +27,10 @@ public class LoginUseCase(
     {
         var now = DateTimeOffset.UtcNow;
 
-        var recentAttempts = await _loginAttempts
-            .GetRecentAsync(request.Email, now - LoginLockoutPolicy.Window, ct);
+        var recentAttempts = await _loginAttempts.GetRecentAsync(
+            request.Email,
+            now - LoginLockoutPolicy.Window, ct
+        );
 
         if (LoginLockoutPolicy.IsLockedOut(recentAttempts, now, out var lockedUntil))
         {
@@ -37,14 +39,14 @@ public class LoginUseCase(
             );
         }
 
-        var authenticatedUser = await _credentialsChecker
-            .ValidateAsync(request.Email, request.Password, ct);
+        var authenticatedUser = await _credentialsChecker.ValidateAsync(
+            request.Email,
+            request.Password, ct
+        );
 
-        await _loginAttempts.AddAsync(
-            LoginAttempt.Record(
-                request.Email,
-                succeeded: authenticatedUser is not null
-            ), ct
+        await _loginAttempts.AddAsync(LoginAttempt.Record(
+            request.Email, succeeded: authenticatedUser is not null),
+            ct
         );
 
         if (authenticatedUser is null)
