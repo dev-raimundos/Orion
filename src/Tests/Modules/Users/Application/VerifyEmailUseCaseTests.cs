@@ -1,5 +1,5 @@
 using Orion.SharedKernel;
-using Users.Application.UseCases;
+using Users.Application.UseCases.VerifyEmail;
 using Users.Domain;
 using Users.Domain.Abstractions;
 using Moq;

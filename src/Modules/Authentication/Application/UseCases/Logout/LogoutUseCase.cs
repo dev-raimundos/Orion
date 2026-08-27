@@ -1,9 +1,7 @@
 using Authentication.Application.Abstractions;
 using Authentication.Domain.Abstractions;
 
-namespace Authentication.Application.UseCases;
-
-public sealed record LogoutRequest(string RefreshToken);
+namespace Authentication.Application.UseCases.Logout;
 
 public class LogoutUseCase(IRefreshTokenRepository refreshTokens, IRefreshTokenGenerator refreshTokenGenerator)
 {

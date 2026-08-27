@@ -4,10 +4,7 @@ using Authentication.Application.Abstractions;
 using Authentication.Domain;
 using Authentication.Domain.Abstractions;
 
-namespace Authentication.Application.UseCases;
-
-public sealed record RefreshTokenRequest(string RefreshToken);
-public sealed record RefreshTokenResult(string AccessToken, DateTimeOffset ExpiresAt, string RefreshToken);
+namespace Authentication.Application.UseCases.RefreshToken;
 
 public class RefreshTokenUseCase(
     IRefreshTokenRepository refreshTokens,
@@ -33,7 +30,7 @@ public class RefreshTokenUseCase(
 
         var (newRawToken, newTokenHash) = _refreshTokenGenerator.Generate();
 
-        var newRefreshToken = RefreshToken.Create(
+        var newRefreshToken = Authentication.Domain.RefreshToken.Create(
             existing.UserId,
             existing.Email,
             newTokenHash,

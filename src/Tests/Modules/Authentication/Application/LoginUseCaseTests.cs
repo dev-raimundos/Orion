@@ -1,7 +1,7 @@
 using Orion.SharedKernel;
 using Orion.SharedKernel.Contracts;
 using Authentication.Application.Abstractions;
-using Authentication.Application.UseCases;
+using Authentication.Application.UseCases.Login;
 using Authentication.Domain;
 using Authentication.Domain.Abstractions;
 using Moq;

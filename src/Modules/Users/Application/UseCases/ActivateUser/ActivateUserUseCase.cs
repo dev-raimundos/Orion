@@ -2,10 +2,7 @@ using Orion.SharedKernel;
 
 using Users.Domain.Abstractions;
 
-namespace Users.Application.UseCases;
-
-public sealed record ActivateUserRequest(Guid UserId);
-public sealed record ActivateUserResult(Guid Id, bool Active);
+namespace Users.Application.UseCases.ActivateUser;
 
 public class ActivateUserUseCase(IUserRepository repository)
 {

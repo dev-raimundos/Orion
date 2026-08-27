@@ -5,10 +5,7 @@ using Authentication.Domain.Abstractions;
 using Orion.SharedKernel;
 using Orion.SharedKernel.Contracts;
 
-namespace Authentication.Application.UseCases;
-
-public sealed record LoginRequest(string Email, string Password);
-public sealed record LoginResult(string AccessToken, DateTimeOffset ExpiresAt, string RefreshToken);
+namespace Authentication.Application.UseCases.Login;
 
 public class LoginUseCase(
     IUserCredentialsChecker credentialsChecker,
@@ -57,7 +54,7 @@ public class LoginUseCase(
 
         var (refreshToken, refreshTokenHash) = _refreshTokenGenerator.Generate();
 
-        var refreshTokenEntity = RefreshToken.Create(
+        var refreshTokenEntity = Authentication.Domain.RefreshToken.Create(
             authenticatedUser.Id,
             authenticatedUser.Email,
             refreshTokenHash,

@@ -1,10 +1,7 @@
 using Orion.SharedKernel;
 using Users.Domain.Abstractions;
 
-namespace Users.Application.UseCases;
-
-public sealed record DeactivateUserRequest(Guid UserId);
-public sealed record DeactivateUserResult(Guid Id, bool Active);
+namespace Users.Application.UseCases.DeactivateUser;
 
 public class DeactivateUserUseCase(IUserRepository repository)
 {

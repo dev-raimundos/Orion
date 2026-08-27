@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Authentication.Application.UseCases;
+using Authentication.Application.UseCases.Logout;
 
 namespace Authentication.Infrastructure.Web;
 

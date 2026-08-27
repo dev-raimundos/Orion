@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Users.Application.UseCases;
+using Users.Application.UseCases.CreateUser;
 
 namespace Users.Infrastructure.Web;
 

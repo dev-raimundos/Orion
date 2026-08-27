@@ -2,10 +2,7 @@ using Orion.SharedKernel;
 using Users.Application.Abstractions;
 using Users.Domain.Abstractions;
 
-namespace Users.Application.UseCases;
-
-public sealed record ChangePasswordRequest(Guid UserId, string CurrentPassword, string NewPassword);
-public sealed record ChangePasswordResult(Guid Id);
+namespace Users.Application.UseCases.ChangePassword;
 
 public class ChangePasswordUseCase(IUserRepository repository, IPasswordHasher passwordHasher)
 {

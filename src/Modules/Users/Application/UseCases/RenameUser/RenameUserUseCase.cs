@@ -1,10 +1,7 @@
 using Orion.SharedKernel;
 using Users.Domain.Abstractions;
 
-namespace Users.Application.UseCases;
-
-public sealed record RenameUserRequest(Guid UserId, string NewName);
-public sealed record RenameUserResult(Guid Id, string Name);
+namespace Users.Application.UseCases.RenameUser;
 
 public class RenameUserUseCase(IUserRepository repository)
 {

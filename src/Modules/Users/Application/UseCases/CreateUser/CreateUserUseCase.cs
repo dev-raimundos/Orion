@@ -1,12 +1,9 @@
-﻿using Orion.SharedKernel;
+using Orion.SharedKernel;
 using Users.Application.Abstractions;
 using Users.Domain;
 using Users.Domain.Abstractions;
 
-namespace Users.Application.UseCases;
-
-public sealed record CreateUserRequest(string Name, string Email, string Password);
-public sealed record CreateUserResult(Guid Id);
+namespace Users.Application.UseCases.CreateUser;
 
 public class CreateUserUseCase(IUserRepository repository, IPasswordHasher passwordHasher)
 {

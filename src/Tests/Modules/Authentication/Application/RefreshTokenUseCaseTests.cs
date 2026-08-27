@@ -1,6 +1,6 @@
 using Orion.SharedKernel;
 using Authentication.Application.Abstractions;
-using Authentication.Application.UseCases;
+using Authentication.Application.UseCases.RefreshToken;
 using Authentication.Domain;
 using Authentication.Domain.Abstractions;
 using Moq;

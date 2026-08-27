@@ -1,10 +1,7 @@
 using Orion.SharedKernel;
 using Users.Domain.Abstractions;
 
-namespace Users.Application.UseCases;
-
-public sealed record VerifyEmailRequest(Guid UserId);
-public sealed record VerifyEmailResult(Guid Id, bool EmailVerified);
+namespace Users.Application.UseCases.VerifyEmail;
 
 public class VerifyEmailUseCase(IUserRepository repository)
 {

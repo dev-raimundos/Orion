@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Users.Application.UseCases;
+using Users.Application.UseCases.ChangePassword;
 
 namespace Users.Infrastructure.Web;
 

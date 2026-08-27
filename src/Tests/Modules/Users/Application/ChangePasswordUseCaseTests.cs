@@ -1,6 +1,6 @@
 using Orion.SharedKernel;
 using Users.Application.Abstractions;
-using Users.Application.UseCases;
+using Users.Application.UseCases.ChangePassword;
 using Users.Domain;
 using Users.Domain.Abstractions;
 using Moq;

@@ -1,5 +1,5 @@
 using Authentication.Application.Abstractions;
-using Authentication.Application.UseCases;
+using Authentication.Application.UseCases.Logout;
 using Authentication.Domain;
 using Authentication.Domain.Abstractions;
 using Moq;

@@ -1,5 +1,6 @@
 using Orion.SharedKernel;
-using Users.Application.UseCases;
+using Users.Application.UseCases.ActivateUser;
+using Users.Application.UseCases.DeactivateUser;
 using Users.Domain;
 using Users.Domain.Abstractions;
 using Moq;
