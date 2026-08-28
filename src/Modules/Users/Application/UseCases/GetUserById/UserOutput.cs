@@ -1,6 +1,6 @@
 namespace Users.Application.UseCases.GetUserById;
 
-public sealed record UserResponse(
+public sealed record UserOutput(
     Guid Id,
     string Name,
     string Email,

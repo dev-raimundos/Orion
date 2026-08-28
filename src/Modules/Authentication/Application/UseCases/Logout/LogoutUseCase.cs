@@ -8,7 +8,7 @@ public class LogoutUseCase(IRefreshTokenRepository refreshTokens, IRefreshTokenG
     private readonly IRefreshTokenRepository _refreshTokens = refreshTokens;
     private readonly IRefreshTokenGenerator _refreshTokenGenerator = refreshTokenGenerator;
 
-    public async Task ExecuteAsync(LogoutRequest request, CancellationToken ct)
+    public async Task ExecuteAsync(LogoutInput request, CancellationToken ct)
     {
         var tokenHash = _refreshTokenGenerator.Hash(request.RefreshToken);
         var existing = await _refreshTokens.GetByTokenHashAsync(tokenHash, ct);

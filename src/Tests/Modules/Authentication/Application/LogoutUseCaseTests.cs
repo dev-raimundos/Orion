@@ -22,7 +22,7 @@ public class LogoutUseCaseTests
 
         var sut = CreateSut();
 
-        await sut.ExecuteAsync(new LogoutRequest("token-desconhecido"), CancellationToken.None);
+        await sut.ExecuteAsync(new LogoutInput("token-desconhecido"), CancellationToken.None);
 
         _refreshTokens.Verify(r => r.UpdateAsync(It.IsAny<RefreshToken>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -30,14 +30,14 @@ public class LogoutUseCaseTests
     [Fact]
     public async Task ExecuteAsync_WhenTokenExists_RevokesAndPersists()
     {
-        var token = RefreshToken.Create(Guid.NewGuid(), "fulano@teste.com", "hash", TimeSpan.FromDays(7));
+        var token = new RefreshToken(Guid.NewGuid(), "fulano@teste.com", "hash", TimeSpan.FromDays(7));
 
         _refreshTokenGenerator.Setup(g => g.Hash("token-atual")).Returns("hash");
         _refreshTokens.Setup(r => r.GetByTokenHashAsync("hash", It.IsAny<CancellationToken>())).ReturnsAsync(token);
 
         var sut = CreateSut();
 
-        await sut.ExecuteAsync(new LogoutRequest("token-atual"), CancellationToken.None);
+        await sut.ExecuteAsync(new LogoutInput("token-atual"), CancellationToken.None);
 
         Assert.False(token.IsActive);
         _refreshTokens.Verify(r => r.UpdateAsync(token, It.IsAny<CancellationToken>()), Times.Once);

@@ -18,10 +18,10 @@ public class CreateUserUseCaseTests
     public async Task ExecuteAsync_WhenEmailAlreadyExists_ThrowsConflict()
     {
         _repository.Setup(r => r.GetByEmailAsync("fulano@teste.com", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(User.Create("Fulano", "fulano@teste.com", "hash"));
+            .ReturnsAsync(new User("Fulano", "fulano@teste.com", "hash"));
 
         var sut = CreateSut();
-        var request = new CreateUserRequest("Fulano", "fulano@teste.com", "senha123");
+        var request = new CreateUserInput("Fulano", "fulano@teste.com", "senha123");
 
         await Assert.ThrowsAsync<AppConflictException>(() => sut.ExecuteAsync(request, CancellationToken.None));
 
@@ -36,7 +36,7 @@ public class CreateUserUseCaseTests
         _passwordHasher.Setup(h => h.Hash("senha123")).Returns("hash-gerado");
 
         var sut = CreateSut();
-        var request = new CreateUserRequest("Fulano", "fulano@teste.com", "senha123");
+        var request = new CreateUserInput("Fulano", "fulano@teste.com", "senha123");
 
         var result = await sut.ExecuteAsync(request, CancellationToken.None);
 

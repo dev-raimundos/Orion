@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Modules/">
     <Project Path="src/Modules/Authentication/Authentication.csproj" Id="a987b2ea-8dc2-4d00-8d99-b35b5763bbe0" />
+    <Project Path="src/Modules/Shopping/Shopping.csproj" Id="dc6c1f40-330e-4e33-baed-919b9c0607cc" />
     <Project Path="src/Modules/Users/Users.csproj" Id="033f3f23-7bd9-41fd-a78c-857c5da893fc" />
   </Folder>
   <Folder Name="/Tests/" />

@@ -23,7 +23,7 @@ public class LoginController(LoginUseCase login) : ControllerBase
     /// Também sujeito a rate limit de 10 requisições/minuto por IP.
     /// </remarks>
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResult>> Login(LoginRequest request, CancellationToken ct)
+    public async Task<ActionResult<LoginOutput>> Login(LoginInput request, CancellationToken ct)
     {
         var result = await _login.ExecuteAsync(request, ct);
         return Ok(result);

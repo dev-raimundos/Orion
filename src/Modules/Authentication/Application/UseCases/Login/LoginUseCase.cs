@@ -20,7 +20,7 @@ public class LoginUseCase(
     private readonly ILoginAttemptRepository _loginAttempts = loginAttempts;
     private readonly IRefreshTokenRepository _refreshTokens = refreshTokens;
 
-    public async Task<LoginResult> ExecuteAsync(LoginRequest request, CancellationToken ct)
+    public async Task<LoginOutput> ExecuteAsync(LoginInput request, CancellationToken ct)
     {
         var now = DateTimeOffset.UtcNow;
 
@@ -41,7 +41,7 @@ public class LoginUseCase(
             request.Password, ct
         );
 
-        await _loginAttempts.AddAsync(LoginAttempt.Record(
+        await _loginAttempts.AddAsync(new LoginAttempt(
             request.Email, succeeded: authenticatedUser is not null),
             ct
         );
@@ -54,7 +54,7 @@ public class LoginUseCase(
 
         var (refreshToken, refreshTokenHash) = _refreshTokenGenerator.Generate();
 
-        var refreshTokenEntity = Authentication.Domain.RefreshToken.Create(
+        var refreshTokenEntity = new Authentication.Domain.RefreshToken(
             authenticatedUser.Id,
             authenticatedUser.Email,
             refreshTokenHash,
@@ -63,7 +63,7 @@ public class LoginUseCase(
 
         await _refreshTokens.AddAsync(refreshTokenEntity, ct);
 
-        return new LoginResult(
+        return new LoginOutput(
             accessToken,
             expiresAt,
             refreshToken

@@ -15,7 +15,7 @@ public class RefreshTokenUseCase(
     private readonly IRefreshTokenGenerator _refreshTokenGenerator = refreshTokenGenerator;
     private readonly ITokenGenerator _tokenGenerator = tokenGenerator;
 
-    public async Task<RefreshTokenResult> ExecuteAsync(RefreshTokenRequest request, CancellationToken ct)
+    public async Task<RefreshTokenOutput> ExecuteAsync(RefreshTokenInput request, CancellationToken ct)
     {
         var tokenHash = _refreshTokenGenerator.Hash(request.RefreshToken);
 
@@ -30,7 +30,7 @@ public class RefreshTokenUseCase(
 
         var (newRawToken, newTokenHash) = _refreshTokenGenerator.Generate();
 
-        var newRefreshToken = Authentication.Domain.RefreshToken.Create(
+        var newRefreshToken = new Authentication.Domain.RefreshToken(
             existing.UserId,
             existing.Email,
             newTokenHash,
@@ -42,7 +42,7 @@ public class RefreshTokenUseCase(
         var (accessToken, expiresAt) = _tokenGenerator
             .Generate(existing.UserId, existing.Email);
 
-        return new RefreshTokenResult(
+        return new RefreshTokenOutput(
             accessToken,
             expiresAt,
             newRawToken

@@ -23,7 +23,7 @@ public class RefreshTokenController(RefreshTokenUseCase refreshToken) : Controll
     /// o refresh token antigo pelo novo. Reusar um refresh token já revogado retorna 401.
     /// </remarks>
     [HttpPost("refresh")]
-    public async Task<ActionResult<RefreshTokenResult>> Refresh(RefreshTokenRequest request, CancellationToken ct)
+    public async Task<ActionResult<RefreshTokenOutput>> Refresh(RefreshTokenInput request, CancellationToken ct)
     {
         var result = await _refreshToken.ExecuteAsync(request, ct);
         return Ok(result);

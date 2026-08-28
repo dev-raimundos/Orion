@@ -7,12 +7,12 @@ public class GetUserByIdUseCase(IUserRepository repository)
 {
     private readonly IUserRepository _repository = repository;
 
-    public async Task<UserResponse> ExecuteAsync(GetUserByIdRequest request, CancellationToken ct)
+    public async Task<UserOutput> ExecuteAsync(GetUserByIdInput request, CancellationToken ct)
     {
         var user = await _repository.GetByIdAsync(request.UserId, ct)
             ?? throw new AppNotFoundException($"Usuário '{request.UserId}' não encontrado.");
 
-        return new UserResponse(
+        return new UserOutput(
             user.Id,
             user.Name,
             user.Email,

@@ -7,7 +7,7 @@ public class DeactivateUserUseCase(IUserRepository repository)
 {
     private readonly IUserRepository _repository = repository;
 
-    public async Task<DeactivateUserResult> ExecuteAsync(DeactivateUserRequest request, CancellationToken ct)
+    public async Task<DeactivateUserOutput> ExecuteAsync(DeactivateUserInput request, CancellationToken ct)
     {
         var user = await _repository.GetByIdAsync(request.UserId, ct)
             ?? throw new AppNotFoundException($"Usuário '{request.UserId}' não encontrado.");
@@ -16,6 +16,6 @@ public class DeactivateUserUseCase(IUserRepository repository)
 
         await _repository.UpdateAsync(user, ct);
 
-        return new DeactivateUserResult(user.Id, user.Active);
+        return new DeactivateUserOutput(user.Id, user.Active);
     }
 }

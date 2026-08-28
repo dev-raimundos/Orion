@@ -1,23 +1,18 @@
-﻿using Orion.SharedKernel;
+﻿namespace Users.Domain;
 
-namespace Users.Domain;
-
-public class User : Entity<Guid>
+public class User
 {
-    public string Name { get; private set; } = null!;
-    public string Email { get; private set; } = null!;
-    public string PasswordHash { get; private set; } = null!;
+    public Guid Id { get; private set; }
+    public string Name { get; private set; }
+    public string Email { get; private set; }
+    public string PasswordHash { get; private set; }
     public bool Active { get; private set; }
     public bool EmailVerified { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
     public DateTimeOffset? LastLoginAt { get; private set; }
 
-    private User()
-    {
-    }
-
-    public static User Create(string name, string email, string passwordHash)
+    public User(string name, string email, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Nome não pode ser vazio.", nameof(name));
@@ -30,20 +25,15 @@ public class User : Entity<Guid>
 
         var now = DateTimeOffset.UtcNow;
 
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Name = name,
-            Email = email,
-            PasswordHash = passwordHash,
-            Active = true,
-            EmailVerified = false,
-            CreatedAt = now,
-            UpdatedAt = now,
-            LastLoginAt = null
-        };
-
-        return user;
+        Id = Guid.NewGuid();
+        Name = name;
+        Email = email;
+        PasswordHash = passwordHash;
+        Active = true;
+        EmailVerified = false;
+        CreatedAt = now;
+        UpdatedAt = now;
+        LastLoginAt = null;
     }
 
     public void Rename(string newName)

@@ -1,28 +1,24 @@
-using Orion.SharedKernel;
-
 namespace Authentication.Domain;
 
-public class LoginAttempt : Entity<Guid>
+public class LoginAttempt
 {
+    public Guid Id { get; private set; }
     public string Email { get; private set; } = null!;
     public bool Succeeded { get; private set; }
     public DateTimeOffset AttemptedAt { get; private set; }
 
-    private LoginAttempt()
+    public LoginAttempt()
     {
     }
 
-    public static LoginAttempt Record(string email, bool succeeded)
+    public LoginAttempt(string email, bool succeeded)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email não pode ser vazio.", nameof(email));
 
-        return new LoginAttempt
-        {
-            Id = Guid.NewGuid(),
-            Email = email,
-            Succeeded = succeeded,
-            AttemptedAt = DateTimeOffset.UtcNow
-        };
+        Id = Guid.NewGuid();
+        Email = email;
+        Succeeded = succeeded;
+        AttemptedAt = DateTimeOffset.UtcNow;
     }
 }

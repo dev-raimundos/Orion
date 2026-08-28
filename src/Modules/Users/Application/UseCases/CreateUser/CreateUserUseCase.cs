@@ -10,7 +10,7 @@ public class CreateUserUseCase(IUserRepository repository, IPasswordHasher passw
     private readonly IUserRepository _repository = repository;
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
-    public async Task<CreateUserResult> ExecuteAsync(CreateUserRequest request, CancellationToken ct)
+    public async Task<CreateUserOutput> ExecuteAsync(CreateUserInput request, CancellationToken ct)
     {
         var existing = await _repository.GetByEmailAsync(request.Email, ct);
 
@@ -18,10 +18,10 @@ public class CreateUserUseCase(IUserRepository repository, IPasswordHasher passw
             throw new AppConflictException($"Já existe um usuário com o email '{request.Email}'.");
 
         var passwordHash = _passwordHasher.Hash(request.Password);
-        var user = User.Create(request.Name, request.Email, passwordHash);
+        var user = new User(request.Name, request.Email, passwordHash);
 
         await _repository.AddAsync(user, ct);
 
-        return new CreateUserResult(user.Id);
+        return new CreateUserOutput(user.Id);
     }
 }

@@ -25,13 +25,13 @@ public class RefreshTokenUseCaseTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppUnauthorizedException>(() =>
-            sut.ExecuteAsync(new RefreshTokenRequest("token-desconhecido"), CancellationToken.None));
+            sut.ExecuteAsync(new RefreshTokenInput("token-desconhecido"), CancellationToken.None));
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenTokenIsAlreadyRevoked_ThrowsUnauthorized()
     {
-        var revoked = RefreshToken.Create(Guid.NewGuid(), "fulano@teste.com", "hash", TimeSpan.FromDays(7));
+        var revoked = new RefreshToken(Guid.NewGuid(), "fulano@teste.com", "hash", TimeSpan.FromDays(7));
         revoked.Revoke();
 
         _refreshTokenGenerator.Setup(g => g.Hash("token-revogado")).Returns("hash");
@@ -40,13 +40,13 @@ public class RefreshTokenUseCaseTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppUnauthorizedException>(() =>
-            sut.ExecuteAsync(new RefreshTokenRequest("token-revogado"), CancellationToken.None));
+            sut.ExecuteAsync(new RefreshTokenInput("token-revogado"), CancellationToken.None));
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenTokenIsExpired_ThrowsUnauthorized()
     {
-        var expired = RefreshToken.Create(Guid.NewGuid(), "fulano@teste.com", "hash", TimeSpan.FromSeconds(-1));
+        var expired = new RefreshToken(Guid.NewGuid(), "fulano@teste.com", "hash", TimeSpan.FromSeconds(-1));
 
         _refreshTokenGenerator.Setup(g => g.Hash("token-expirado")).Returns("hash");
         _refreshTokens.Setup(r => r.GetByTokenHashAsync("hash", It.IsAny<CancellationToken>())).ReturnsAsync(expired);
@@ -54,14 +54,14 @@ public class RefreshTokenUseCaseTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppUnauthorizedException>(() =>
-            sut.ExecuteAsync(new RefreshTokenRequest("token-expirado"), CancellationToken.None));
+            sut.ExecuteAsync(new RefreshTokenInput("token-expirado"), CancellationToken.None));
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenTokenIsValid_RevokesTheOldTokenAndPersistsANewOne()
     {
         var userId = Guid.NewGuid();
-        var current = RefreshToken.Create(userId, "fulano@teste.com", "hash-atual", TimeSpan.FromDays(7));
+        var current = new RefreshToken(userId, "fulano@teste.com", "hash-atual", TimeSpan.FromDays(7));
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
 
         _refreshTokenGenerator.Setup(g => g.Hash("token-atual")).Returns("hash-atual");
@@ -70,7 +70,7 @@ public class RefreshTokenUseCaseTests
         _tokenGenerator.Setup(t => t.Generate(userId, "fulano@teste.com")).Returns(("access-token-novo", expiresAt));
 
         var sut = CreateSut();
-        var result = await sut.ExecuteAsync(new RefreshTokenRequest("token-atual"), CancellationToken.None);
+        var result = await sut.ExecuteAsync(new RefreshTokenInput("token-atual"), CancellationToken.None);
 
         Assert.False(current.IsActive);
         Assert.Equal("access-token-novo", result.AccessToken);

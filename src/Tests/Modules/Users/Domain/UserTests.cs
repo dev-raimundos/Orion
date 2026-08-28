@@ -5,9 +5,9 @@ namespace Users.Tests.Domain;
 public class UserTests
 {
     [Fact]
-    public void Create_WithValidData_CreatesActiveUnverifiedUser()
+    public void Constructor_WithValidData_CreatesActiveUnverifiedUser()
     {
-        var user = User.Create("Fulano", "fulano@teste.com", "hash");
+        var user = new User("Fulano", "fulano@teste.com", "hash");
 
         Assert.NotEqual(Guid.Empty, user.Id);
         Assert.Equal("Fulano", user.Name);
@@ -22,15 +22,15 @@ public class UserTests
     [InlineData("", "email@teste.com", "hash")]
     [InlineData("Nome", "", "hash")]
     [InlineData("Nome", "email@teste.com", "")]
-    public void Create_WithMissingRequiredField_Throws(string name, string email, string passwordHash)
+    public void Constructor_WithMissingRequiredField_Throws(string name, string email, string passwordHash)
     {
-        Assert.Throws<ArgumentException>(() => User.Create(name, email, passwordHash));
+        Assert.Throws<ArgumentException>(() => new User(name, email, passwordHash));
     }
 
     [Fact]
     public void Rename_WithValidName_UpdatesNameAndTouchesUpdatedAt()
     {
-        var user = User.Create("Nome Antigo", "email@teste.com", "hash");
+        var user = new User("Nome Antigo", "email@teste.com", "hash");
         var updatedAtBefore = user.UpdatedAt;
 
         user.Rename("Nome Novo");
@@ -42,7 +42,7 @@ public class UserTests
     [Fact]
     public void Rename_WithEmptyName_Throws()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
 
         Assert.Throws<ArgumentException>(() => user.Rename(" "));
     }
@@ -50,7 +50,7 @@ public class UserTests
     [Fact]
     public void ChangePassword_WithValidHash_UpdatesPasswordHash()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash-antigo");
+        var user = new User("Nome", "email@teste.com", "hash-antigo");
 
         user.ChangePassword("hash-novo");
 
@@ -60,7 +60,7 @@ public class UserTests
     [Fact]
     public void VerifyEmail_WhenNotVerified_MarksAsVerified()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
 
         user.VerifyEmail();
 
@@ -70,7 +70,7 @@ public class UserTests
     [Fact]
     public void Deactivate_ThenActivate_TogglesActiveFlag()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
 
         user.Deactivate();
         Assert.False(user.Active);
@@ -82,7 +82,7 @@ public class UserTests
     [Fact]
     public void RegisterLogin_SetsLastLoginAt()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
 
         user.RegisterLogin();
 

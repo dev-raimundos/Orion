@@ -20,11 +20,11 @@ public class RenameUserController(RenameUserUseCase renameUser) : ControllerBase
     /// Requer um access token válido cujo Id (claim "sub") seja igual ao <paramref name="id"/> da rota.
     /// </remarks>
     [HttpPut("{id:guid}/name")]
-    public async Task<ActionResult<RenameUserResult>> Rename(Guid id, [FromBody] string newName, CancellationToken ct)
+    public async Task<ActionResult<RenameUserOutput>> Rename(Guid id, [FromBody] string newName, CancellationToken ct)
     {
         this.EnsureIsCurrentUser(id);
 
-        var result = await _renameUser.ExecuteAsync(new RenameUserRequest(id, newName), ct);
+        var result = await _renameUser.ExecuteAsync(new RenameUserInput(id, newName), ct);
         return Ok(result);
     }
 }

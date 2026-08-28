@@ -21,17 +21,17 @@ public class RenameUserUseCaseTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppNotFoundException>(() =>
-            sut.ExecuteAsync(new RenameUserRequest(Guid.NewGuid(), "Novo Nome"), CancellationToken.None));
+            sut.ExecuteAsync(new RenameUserInput(Guid.NewGuid(), "Novo Nome"), CancellationToken.None));
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenUserExists_RenamesAndPersists()
     {
-        var user = User.Create("Nome Antigo", "email@teste.com", "hash");
+        var user = new User("Nome Antigo", "email@teste.com", "hash");
         _repository.Setup(r => r.GetByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
         var sut = CreateSut();
-        var result = await sut.ExecuteAsync(new RenameUserRequest(user.Id, "Nome Novo"), CancellationToken.None);
+        var result = await sut.ExecuteAsync(new RenameUserInput(user.Id, "Nome Novo"), CancellationToken.None);
 
         Assert.Equal("Nome Novo", result.Name);
         _repository.Verify(r => r.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);

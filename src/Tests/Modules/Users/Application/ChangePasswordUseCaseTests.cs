@@ -23,20 +23,20 @@ public class ChangePasswordUseCaseTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppNotFoundException>(() =>
-            sut.ExecuteAsync(new ChangePasswordRequest(Guid.NewGuid(), "atual", "nova"), CancellationToken.None));
+            sut.ExecuteAsync(new ChangePasswordInput(Guid.NewGuid(), "atual", "nova"), CancellationToken.None));
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenCurrentPasswordIsInvalid_ThrowsUnauthorized()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash-atual");
+        var user = new User("Nome", "email@teste.com", "hash-atual");
         _repository.Setup(r => r.GetByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
         _passwordHasher.Setup(h => h.Verify("senha-errada", "hash-atual")).Returns(false);
 
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppUnauthorizedException>(() =>
-            sut.ExecuteAsync(new ChangePasswordRequest(user.Id, "senha-errada", "nova"), CancellationToken.None));
+            sut.ExecuteAsync(new ChangePasswordInput(user.Id, "senha-errada", "nova"), CancellationToken.None));
 
         _repository.Verify(r => r.UpdateAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -44,13 +44,13 @@ public class ChangePasswordUseCaseTests
     [Fact]
     public async Task ExecuteAsync_WhenCurrentPasswordIsValid_ChangesAndPersists()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash-atual");
+        var user = new User("Nome", "email@teste.com", "hash-atual");
         _repository.Setup(r => r.GetByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
         _passwordHasher.Setup(h => h.Verify("senha-certa", "hash-atual")).Returns(true);
         _passwordHasher.Setup(h => h.Hash("nova-senha")).Returns("hash-novo");
 
         var sut = CreateSut();
-        var result = await sut.ExecuteAsync(new ChangePasswordRequest(user.Id, "senha-certa", "nova-senha"), CancellationToken.None);
+        var result = await sut.ExecuteAsync(new ChangePasswordInput(user.Id, "senha-certa", "nova-senha"), CancellationToken.None);
 
         Assert.Equal(user.Id, result.Id);
         Assert.Equal("hash-novo", user.PasswordHash);

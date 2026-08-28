@@ -20,11 +20,11 @@ public class GetUserByIdController(GetUserByIdUseCase getUserById) : ControllerB
     /// Requer um access token válido cujo Id (claim "sub") seja igual ao <paramref name="id"/> da rota.
     /// </remarks>
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<UserResponse>> GetById(Guid id, CancellationToken ct)
+    public async Task<ActionResult<UserOutput>> GetById(Guid id, CancellationToken ct)
     {
         this.EnsureIsCurrentUser(id);
 
-        var result = await _getUserById.ExecuteAsync(new GetUserByIdRequest(id), ct);
+        var result = await _getUserById.ExecuteAsync(new GetUserByIdInput(id), ct);
         return Ok(result);
     }
 }

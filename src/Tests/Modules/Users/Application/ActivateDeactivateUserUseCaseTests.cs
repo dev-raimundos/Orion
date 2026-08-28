@@ -20,18 +20,18 @@ public class ActivateDeactivateUserUseCaseTests
         var sut = new ActivateUserUseCase(_repository.Object);
 
         await Assert.ThrowsAsync<AppNotFoundException>(() =>
-            sut.ExecuteAsync(new ActivateUserRequest(Guid.NewGuid()), CancellationToken.None));
+            sut.ExecuteAsync(new ActivateUserInput(Guid.NewGuid()), CancellationToken.None));
     }
 
     [Fact]
     public async Task Activate_WhenUserIsInactive_ActivatesAndPersists()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
         user.Deactivate();
         _repository.Setup(r => r.GetByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
         var sut = new ActivateUserUseCase(_repository.Object);
-        var result = await sut.ExecuteAsync(new ActivateUserRequest(user.Id), CancellationToken.None);
+        var result = await sut.ExecuteAsync(new ActivateUserInput(user.Id), CancellationToken.None);
 
         Assert.True(result.Active);
         _repository.Verify(r => r.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);
@@ -46,17 +46,17 @@ public class ActivateDeactivateUserUseCaseTests
         var sut = new DeactivateUserUseCase(_repository.Object);
 
         await Assert.ThrowsAsync<AppNotFoundException>(() =>
-            sut.ExecuteAsync(new DeactivateUserRequest(Guid.NewGuid()), CancellationToken.None));
+            sut.ExecuteAsync(new DeactivateUserInput(Guid.NewGuid()), CancellationToken.None));
     }
 
     [Fact]
     public async Task Deactivate_WhenUserIsActive_DeactivatesAndPersists()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
         _repository.Setup(r => r.GetByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
         var sut = new DeactivateUserUseCase(_repository.Object);
-        var result = await sut.ExecuteAsync(new DeactivateUserRequest(user.Id), CancellationToken.None);
+        var result = await sut.ExecuteAsync(new DeactivateUserInput(user.Id), CancellationToken.None);
 
         Assert.False(result.Active);
         _repository.Verify(r => r.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);

@@ -20,11 +20,11 @@ public class ActivateUserController(ActivateUserUseCase activateUser) : Controll
     /// Requer um access token válido cujo Id (claim "sub") seja igual ao <paramref name="id"/> da rota.
     /// </remarks>
     [HttpPost("{id:guid}/activate")]
-    public async Task<ActionResult<ActivateUserResult>> Activate(Guid id, CancellationToken ct)
+    public async Task<ActionResult<ActivateUserOutput>> Activate(Guid id, CancellationToken ct)
     {
         this.EnsureIsCurrentUser(id);
 
-        var result = await _activateUser.ExecuteAsync(new ActivateUserRequest(id), ct);
+        var result = await _activateUser.ExecuteAsync(new ActivateUserInput(id), ct);
         return Ok(result);
     }
 }

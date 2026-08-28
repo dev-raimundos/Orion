@@ -21,17 +21,17 @@ public class VerifyEmailUseCaseTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppNotFoundException>(() =>
-            sut.ExecuteAsync(new VerifyEmailRequest(Guid.NewGuid()), CancellationToken.None));
+            sut.ExecuteAsync(new VerifyEmailInput(Guid.NewGuid()), CancellationToken.None));
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenUserExists_VerifiesEmailAndPersists()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
         _repository.Setup(r => r.GetByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
         var sut = CreateSut();
-        var result = await sut.ExecuteAsync(new VerifyEmailRequest(user.Id), CancellationToken.None);
+        var result = await sut.ExecuteAsync(new VerifyEmailInput(user.Id), CancellationToken.None);
 
         Assert.True(result.EmailVerified);
         _repository.Verify(r => r.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);

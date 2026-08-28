@@ -23,7 +23,7 @@ public class LogoutController(LogoutUseCase logout) : ControllerBase
     /// O access token em uso continua válido até expirar naturalmente (não é revogável).
     /// </remarks>
     [HttpPost("logout")]
-    public async Task<IActionResult> Logout(LogoutRequest request, CancellationToken ct)
+    public async Task<IActionResult> Logout(LogoutInput request, CancellationToken ct)
     {
         await _logout.ExecuteAsync(request, ct);
         return NoContent();

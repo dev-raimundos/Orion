@@ -9,7 +9,7 @@ public class ChangePasswordUseCase(IUserRepository repository, IPasswordHasher p
     private readonly IUserRepository _repository = repository;
     private readonly IPasswordHasher _passwordHasher = passwordHasher;
 
-    public async Task<ChangePasswordResult> ExecuteAsync(ChangePasswordRequest request, CancellationToken ct)
+    public async Task<ChangePasswordOutput> ExecuteAsync(ChangePasswordInput request, CancellationToken ct)
     {
         var user = await _repository.GetByIdAsync(request.UserId, ct)
             ?? throw new AppNotFoundException($"Usuário '{request.UserId}' não encontrado.");
@@ -22,6 +22,6 @@ public class ChangePasswordUseCase(IUserRepository repository, IPasswordHasher p
 
         await _repository.UpdateAsync(user, ct);
 
-        return new ChangePasswordResult(user.Id);
+        return new ChangePasswordOutput(user.Id);
     }
 }

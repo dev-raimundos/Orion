@@ -27,13 +27,13 @@ public class LoginUseCaseTests
     public async Task ExecuteAsync_WhenLockedOut_ThrowsLockedAndNeverChecksCredentials()
     {
         var recentFailures = Enumerable.Range(0, LoginLockoutPolicy.MaxFailedAttempts)
-            .Select(_ => LoginAttempt.Record("fulano@teste.com", succeeded: false))
+            .Select(_ => new LoginAttempt("fulano@teste.com", succeeded: false))
             .ToList();
         _loginAttempts.Setup(r => r.GetRecentAsync("fulano@teste.com", It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(recentFailures);
 
         var sut = CreateSut();
-        var request = new LoginRequest("fulano@teste.com", "qualquer-senha");
+        var request = new LoginInput("fulano@teste.com", "qualquer-senha");
 
         await Assert.ThrowsAsync<AppLockedException>(() => sut.ExecuteAsync(request, CancellationToken.None));
 
@@ -49,7 +49,7 @@ public class LoginUseCaseTests
             .ReturnsAsync((AuthenticatedUser?)null);
 
         var sut = CreateSut();
-        var request = new LoginRequest("fulano@teste.com", "senha-errada");
+        var request = new LoginInput("fulano@teste.com", "senha-errada");
 
         await Assert.ThrowsAsync<AppUnauthorizedException>(() => sut.ExecuteAsync(request, CancellationToken.None));
 
@@ -76,7 +76,7 @@ public class LoginUseCaseTests
             .Returns(("refresh-token", "refresh-token-hash"));
 
         var sut = CreateSut();
-        var request = new LoginRequest("fulano@teste.com", "senha-certa");
+        var request = new LoginInput("fulano@teste.com", "senha-certa");
 
         var result = await sut.ExecuteAsync(request, CancellationToken.None);
 

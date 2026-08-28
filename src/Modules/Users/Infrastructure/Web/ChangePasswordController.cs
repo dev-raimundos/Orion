@@ -20,11 +20,11 @@ public class ChangePasswordController(ChangePasswordUseCase changePassword) : Co
     /// Requer um access token válido cujo Id (claim "sub") seja igual ao <paramref name="id"/> da rota.
     /// </remarks>
     [HttpPut("{id:guid}/password")]
-    public async Task<ActionResult<ChangePasswordResult>> ChangePassword(Guid id, ChangePasswordBody body, CancellationToken ct)
+    public async Task<ActionResult<ChangePasswordOutput>> ChangePassword(Guid id, ChangePasswordBody body, CancellationToken ct)
     {
         this.EnsureIsCurrentUser(id);
 
-        var result = await _changePassword.ExecuteAsync(new ChangePasswordRequest(id, body.CurrentPassword, body.NewPassword), ct);
+        var result = await _changePassword.ExecuteAsync(new ChangePasswordInput(id, body.CurrentPassword, body.NewPassword), ct);
         return Ok(result);
     }
 }

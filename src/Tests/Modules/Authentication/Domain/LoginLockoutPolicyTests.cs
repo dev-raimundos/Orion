@@ -8,7 +8,7 @@ public class LoginLockoutPolicyTests
     public void IsLockedOut_WhenFewerThanMaxFailedAttempts_ReturnsFalse()
     {
         var attempts = Enumerable.Range(0, LoginLockoutPolicy.MaxFailedAttempts - 1)
-            .Select(_ => LoginAttempt.Record("fulano@teste.com", succeeded: false))
+            .Select(_ => new LoginAttempt("fulano@teste.com", succeeded: false))
             .ToList();
 
         var isLockedOut = LoginLockoutPolicy.IsLockedOut(attempts, DateTimeOffset.UtcNow, out var lockedUntil);
@@ -21,7 +21,7 @@ public class LoginLockoutPolicyTests
     public void IsLockedOut_WhenMaxFailedAttemptsHappenedJustNow_ReturnsTrue()
     {
         var attempts = Enumerable.Range(0, LoginLockoutPolicy.MaxFailedAttempts)
-            .Select(_ => LoginAttempt.Record("fulano@teste.com", succeeded: false))
+            .Select(_ => new LoginAttempt("fulano@teste.com", succeeded: false))
             .ToList();
 
         var isLockedOut = LoginLockoutPolicy.IsLockedOut(attempts, DateTimeOffset.UtcNow, out var lockedUntil);
@@ -34,7 +34,7 @@ public class LoginLockoutPolicyTests
     public void IsLockedOut_SuccessfulAttemptsDoNotCountTowardLockout()
     {
         var attempts = Enumerable.Range(0, LoginLockoutPolicy.MaxFailedAttempts)
-            .Select(_ => LoginAttempt.Record("fulano@teste.com", succeeded: true))
+            .Select(_ => new LoginAttempt("fulano@teste.com", succeeded: true))
             .ToList();
 
         var isLockedOut = LoginLockoutPolicy.IsLockedOut(attempts, DateTimeOffset.UtcNow, out var lockedUntil);

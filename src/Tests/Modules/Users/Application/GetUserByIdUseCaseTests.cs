@@ -21,17 +21,17 @@ public class GetUserByIdUseCaseTests
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<AppNotFoundException>(() =>
-            sut.ExecuteAsync(new GetUserByIdRequest(Guid.NewGuid()), CancellationToken.None));
+            sut.ExecuteAsync(new GetUserByIdInput(Guid.NewGuid()), CancellationToken.None));
     }
 
     [Fact]
     public async Task ExecuteAsync_WhenUserExists_ReturnsMappedResponse()
     {
-        var user = User.Create("Nome", "email@teste.com", "hash");
+        var user = new User("Nome", "email@teste.com", "hash");
         _repository.Setup(r => r.GetByIdAsync(user.Id, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 
         var sut = CreateSut();
-        var result = await sut.ExecuteAsync(new GetUserByIdRequest(user.Id), CancellationToken.None);
+        var result = await sut.ExecuteAsync(new GetUserByIdInput(user.Id), CancellationToken.None);
 
         Assert.Equal(user.Id, result.Id);
         Assert.Equal(user.Name, result.Name);

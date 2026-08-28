@@ -1,3 +1,3 @@
 namespace Users.Application.UseCases.ChangePassword;
 
-public sealed record ChangePasswordResult(Guid Id);
+public sealed record ChangePasswordOutput(Guid Id);

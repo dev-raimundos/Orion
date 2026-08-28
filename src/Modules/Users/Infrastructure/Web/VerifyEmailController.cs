@@ -20,11 +20,11 @@ public class VerifyEmailController(VerifyEmailUseCase verifyEmail) : ControllerB
     /// Requer um access token válido cujo Id (claim "sub") seja igual ao <paramref name="id"/> da rota.
     /// </remarks>
     [HttpPost("{id:guid}/verify-email")]
-    public async Task<ActionResult<VerifyEmailResult>> VerifyEmail(Guid id, CancellationToken ct)
+    public async Task<ActionResult<VerifyEmailOutput>> VerifyEmail(Guid id, CancellationToken ct)
     {
         this.EnsureIsCurrentUser(id);
 
-        var result = await _verifyEmail.ExecuteAsync(new VerifyEmailRequest(id), ct);
+        var result = await _verifyEmail.ExecuteAsync(new VerifyEmailInput(id), ct);
         return Ok(result);
     }
 }

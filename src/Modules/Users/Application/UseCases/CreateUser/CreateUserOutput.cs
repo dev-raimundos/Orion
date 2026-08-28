@@ -1,3 +1,3 @@
 namespace Users.Application.UseCases.CreateUser;
 
-public sealed record CreateUserResult(Guid Id);
+public sealed record CreateUserOutput(Guid Id);
