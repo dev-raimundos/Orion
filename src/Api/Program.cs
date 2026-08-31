@@ -3,7 +3,11 @@ using Api.Exceptions;
 using Api.Migrations;
 using Api.OpenApi;
 using Api.Security;
+
 using Authentication.Infrastructure;
+
+using Shopping.Infrastructure;
+
 using Users.Infrastructure;
 
 namespace Api;
@@ -19,6 +23,7 @@ public static class Program
 
         builder.Services.AddUsersModule(builder.Configuration);
         builder.Services.AddAuthenticationModule(builder.Configuration);
+        builder.Services.AddShoppingModule(builder.Configuration);
 
         builder.Services.AddJwtAuthentication(builder.Configuration);
         builder.Services.AddAuthorization();

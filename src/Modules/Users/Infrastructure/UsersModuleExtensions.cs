@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using Orion.SharedKernel.Contracts;
+
 using Users.Application.Abstractions;
 using Users.Application.UseCases.ActivateUser;
 using Users.Application.UseCases.ChangePassword;
@@ -21,7 +23,7 @@ public static class UsersModuleExtensions
     public static IServiceCollection AddUsersModule(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("DatabaseConnection")
-            ?? throw new InvalidOperationException("Connection string 'DatabaseConnection' não configurada.");
+            ?? throw new InvalidOperationException("Connection string not found");
 
         services.AddDbContext<UsersDbContext>(options => options.UseSqlServer(connectionString));
 

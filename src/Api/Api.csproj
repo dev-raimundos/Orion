@@ -22,6 +22,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Modules\Authentication\Authentication.csproj" />
+		<ProjectReference Include="..\Modules\Shopping\Shopping.csproj" />
 		<ProjectReference Include="..\Modules\Users\Users.csproj" />
 		<ProjectReference Include="..\Orion.SharedKernel\Orion.SharedKernel.csproj" />
 	</ItemGroup>
