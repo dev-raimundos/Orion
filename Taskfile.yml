@@ -1,0 +1,77 @@
+version: '3'
+
+vars:
+  API: src/Api/Api.csproj
+  ALL_MODULES: Users Authentication Shopping
+
+tasks:
+  _ef:
+    internal: true
+    requires:
+      vars: [MODULE, ARGS]
+    vars:
+      PROJECT: src/Modules/{{.MODULE}}/{{.MODULE}}.csproj
+      CONTEXT: '{{.MODULE}}DbContext'
+    cmds:
+      - dotnet ef {{.ARGS}} -p {{.PROJECT}} -s {{.API}} -c {{.CONTEXT}}
+
+  migration:add:
+    desc: Cria uma migration (MODULE=Shopping NAME=InitialCreate). MODULE deve ser PascalCase, igual ao nome da pasta/projeto.
+    requires:
+      vars: [MODULE, NAME]
+    cmds:
+      - task: _ef
+        vars:
+          MODULE: '{{.MODULE}}'
+          ARGS: 'migrations add {{.NAME}} -o Infrastructure/Persistence/Migrations'
+
+  migration:remove:
+    desc: Remove a última migration ainda não aplicada ao banco (MODULE=Shopping)
+    requires:
+      vars: [MODULE]
+    cmds:
+      - task: _ef
+        vars:
+          MODULE: '{{.MODULE}}'
+          ARGS: 'migrations remove'
+
+  _migration:list:one:
+    internal: true
+    requires:
+      vars: [MODULE]
+    cmds:
+      - 'echo === {{.MODULE}} ==='
+      - task: _ef
+        vars:
+          MODULE: '{{.MODULE}}'
+          ARGS: 'migrations list'
+
+  migration:list:
+    desc: Lista as migrations (MODULE=Shopping opcional; sem MODULE lista de todos os módulos)
+    vars:
+      TARGETS: '{{.MODULE | default .ALL_MODULES}}'
+    cmds:
+      - for: { var: TARGETS }
+        task: _migration:list:one
+        vars:
+          MODULE: '{{.ITEM}}'
+
+  migration:update:
+    desc: Aplica as migrations pendentes no banco (MODULE=Shopping [NAME=migration alvo])
+    requires:
+      vars: [MODULE]
+    cmds:
+      - task: _ef
+        vars:
+          MODULE: '{{.MODULE}}'
+          ARGS: 'database update {{.NAME}}'
+
+  migration:script:
+    desc: Gera script SQL idempotente das migrations (MODULE=Shopping [OUT=arquivo.sql])
+    requires:
+      vars: [MODULE]
+    cmds:
+      - task: _ef
+        vars:
+          MODULE: '{{.MODULE}}'
+          ARGS: 'migrations script --idempotent -o {{.OUT | default (printf "%s.sql" .MODULE)}}'
