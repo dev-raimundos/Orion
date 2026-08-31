@@ -6,6 +6,16 @@
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path="Taskfile.yml" />
+    <File Path="src/Modules/Directory.Build.props" />
+    <File Path=".csstools.json" />
+    <File Path=".editorconfig" />
+    <File Path=".env.production.example" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path="Directory.Build.props" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
   </Folder>
   <Folder Name="/Tests/" />
   <Folder Name="/Tests/Architecture/">

@@ -1,4 +1,4 @@
-﻿using Shopping.Application.Abstractions;
+﻿using Shopping.Domain.Abstractions;
 
 namespace Shopping.Infrastructure.Persistence;
 
