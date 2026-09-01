@@ -1,4 +1,7 @@
 using Authentication.Infrastructure;
+
+using Shopping.Infrastructure;
+
 using Users.Infrastructure;
 
 namespace Api.Migrations;
@@ -14,5 +17,6 @@ public static class MigrationExtensions
 
         await app.Services.MigrateUsersModuleAsync();
         await app.Services.MigrateAuthenticationModuleAsync();
+        await app.Services.MigrateShoppingModulesAsync();
     }
 }

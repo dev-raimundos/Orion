@@ -18,7 +18,6 @@ public static class ShoppingModuleExtensions
         return services;
     }
 
-    //TODO: registrar método no program.cs
     public static async Task MigrateShoppingModulesAsync(this IServiceProvider services, CancellationToken ct = default)
     {
         AsyncServiceScope scope = services.CreateAsyncScope();
